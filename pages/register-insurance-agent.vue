@@ -1,0 +1,65 @@
+<template>
+  <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl">
+      
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="flex items-center justify-center space-x-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-[#046937]">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <h1 class="text-3xl font-bold text-gray-900">Join Your Company</h1>
+        </div>
+        <p class="text-lg text-gray-900 max-w-2xl mx-auto">
+          Enter your company's business code to join their NBBA membership and access exclusive benefits.
+        </p>
+      </div>
+
+      <InsuranceAgentRegister />
+
+      <!-- Footer -->
+      <!-- <div class="mt-8 text-center">
+        <p class="text-sm text-white">
+          Don't have a business code? Contact your company administrator or
+          <NuxtLink to="/register" class="text-[#046937] hover:underline font-medium">register your business</NuxtLink>
+        </p>
+      </div> -->
+
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const form = ref({
+  businessCode: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  username: '',
+  password: ''
+})
+
+async function joinCompany() {
+  try {
+    const response = await $fetch('/api/register-employee', {
+      method: 'POST',
+      body: form.value,
+    })
+
+    alert('Successfully joined the company!')
+    console.log(response)
+    window.location.href = '/login'
+  } catch (err: any) {
+    console.error('Error registering employee:', err)
+    alert(err?.data?.statusMessage || 'Failed to join company')
+  }
+}
+
+</script>

@@ -1,0 +1,681 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+  binaryTargets   = ["native", "debian-openssl-1.1.x", "windows", "darwin-arm64"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+model User {
+  id               Int                  @id @default(autoincrement())
+  loginType        String?              @default("email")
+  password         String?
+  email            String?              @unique
+  firstName        String?
+  lastName         String?
+  username         String?              @unique
+  phone            String?              @unique
+  avatar           String?              
+  photos               Photo[]
+  insuranceCardImage String?
+
+  dentalCardImage String?
+  visionCardImage String?
+
+  plans            Plan[]
+  providerNetworks ProviderNetwork[]    
+  providers        Provider[]
+  claimSupports    ClaimSupport[]
+
+  companyAdmin     CompanyAdministrator? @relation(fields: [companyAdminId], references: [id])
+  companyAdminId   Int?
+
+  appAdmin         AppAdmin?            @relation(fields: [appAdminId], references: [id])
+  appAdminId       Int?    
+
+  leadInvites LeadInvite[] 
+  leadNotes LeadNote[]
+
+  companyId  Int?
+  company    Company? @relation(fields: [companyId], references: [id])
+
+  insuranceAgent  InsuranceAgent?       @relation("InsuranceAgentUser")
+  insuranceApplications InsuranceApplication[]
+  insuranceAgentInvites    InsuranceAgentInvite[]
+
+  session          Session[]
+  stripeCustomerId String?
+  Subscription     Subscription[]
+
+  employee Employee? @relation("EmployeeUser")
+
+  insuranceCards   InsuranceCard[]
+
+  auditTrails   AuditTrail[]
+
+  paymentAuthorizations PaymentAuthorization[]
+  paymentAuthorizationAuditTrails PaymentAuthorizationAuditTrail[]
+
+
+
+  isActive         Boolean   @default(true)   // 👈 Soft delete flag
+  deletedAt        DateTime?     
+
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+}
+
+
+model InsuranceAgent {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
+  username  String   @unique
+  password  String
+  order     Int      @default(0)
+
+  // Link back to User (1:1)
+  user   User? @relation("InsuranceAgentUser", fields: [userId], references: [id])
+  userId Int?  @unique
+
+  // Overseen by AppAdmin
+  appAdmin   AppAdmin? @relation(fields: [appAdminId], references: [id])
+  appAdminId Int?
+
+  isActive  Boolean  @default(true)
+  isAvailable Boolean @default(false)
+  isOnCall    Boolean @default(false)
+  companies   Company[]
+  companyAgreements CompanyAgreement[]
+  lastAssignedAt DateTime @default(now())
+  deletedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model InsuranceApplication {
+  id                 Int       @id @default(autoincrement())
+  user               User      @relation(fields: [userId], references: [id])
+  userId             Int
+
+  groupNumber        String
+  groupName          String
+  coverageTier       String?  // single, individual_spouse, individual_child, family
+  waiveOneTimeFee    Boolean?
+
+  firstName          String?
+  lastName           String?
+  middleName         String?
+  phoneNumber        String?
+  email              String?
+
+  spouseFirstName            String?
+  spouseMiddleName           String?
+  spouseLastName             String?
+  spouseSocialSecurityNumber String?
+  spouseDateOfBirth          DateTime?
+  spouseAge                  String?
+  spouseGender               String?
+  spouseWeight               String?
+  spouseHeight               String?
+
+  streetAddress      String
+  city               String
+  state              String
+  zipCode            String
+
+  hrsPerWeek         String?
+  jobTitle           String?
+ 
+
+  socialSecurityNumber String?
+  dateOfBirth        DateTime?
+  hireDate           DateTime?
+  rehireDate         DateTime?
+  location           String?
+
+  isDivision          Boolean
+  parentCompany       String?
+  age                 String?
+  gender              String?
+  weight              String?
+  height              String?
+
+  healthPlan         String?
+  healthPlanPrice    Float?
+  visionAndDentalPlan Boolean?
+  visionAndDentalPrice Float?
+  lifeAncillaryPlan  String?
+
+  ancillaryPlans     AncillaryPlan[]
+
+  reasons         String?  // comma-separated list of reasons
+
+  underwritingAnswers Json?     // { [productKey]: { [questionId]: { answer, details? } } }
+  status              String    @default("draft") // draft, underwriting_complete, pdf_generated, signed
+  signedAt            DateTime?
+  signatureMethod     String?   // "signature" | "code"
+
+  signatureCodes     SignatureCode[]
+  payments           Payment[]
+
+  pdfUrl             String?   @db.Text
+
+  auditTrails        AuditTrail[]
+
+  dependents         Dependent[] 
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+
+model AncillaryPlan {
+  id                     Int                   @id @default(autoincrement())
+  insuranceApplication   InsuranceApplication  @relation(fields: [applicationId], references: [id])
+  applicationId          Int
+
+  planName               String?
+  product                String?
+  price                  Float?                 // store monthly/annual price
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+
+// Every payment attempt (success or decline) against an application,
+// recorded for the admin payments dashboard.
+model Payment {
+  id            Int                  @id @default(autoincrement())
+  application   InsuranceApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+
+  amount        Float
+  method        String  // "card" | "ach"
+  status        String  // "succeeded" | "declined"
+  transactionId String?
+  message       String? // decline reason from the processor
+  invoice       String?
+  pdfUrl        String? @db.Text // receipt PDF for successful payments
+
+  createdAt DateTime @default(now())
+}
+
+model SignatureCode {
+  id                   Int                   @id @default(autoincrement())
+  insuranceApplication InsuranceApplication? @relation(fields: [applicationId], references: [id])
+  applicationId        Int?
+
+  companyAgreement   CompanyAgreement? @relation(fields: [companyAgreementId], references: [id])
+  companyAgreementId Int?
+
+  codeHash  String    // sha256 of the 6-digit code, never store plaintext
+  channel   String    // "email" | "sms"
+  sentTo    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  attempts  Int       @default(0)
+
+  createdAt DateTime @default(now())
+}
+
+// Agent-driven company signup: the agent fills out company + contact info over
+// the phone, the client reviews and signs via a tokenized public link.
+model CompanyAgreement {
+  id        Int     @id @default(autoincrement())
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+
+  agent   InsuranceAgent? @relation(fields: [agentId], references: [id])
+  agentId Int?
+
+  contactFirstName String
+  contactLastName  String
+  contactEmail     String
+  contactPhone     String?
+
+  reviewToken     String    @unique
+  pdfUrl          String?   @db.Text
+  status          String    @default("pending") // pending, signed
+  signedAt        DateTime?
+  signatureMethod String?   // "signature" | "code"
+
+  signatureCodes SignatureCode[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Dependent {
+  id            Int       @id @default(autoincrement())
+  application   InsuranceApplication @relation(fields: [applicationId], references: [id])
+  applicationId Int
+
+  firstName     String
+  lastName      String
+  middleName    String?
+  dateOfBirth   DateTime
+  age           String?
+  gender        String
+  socialSecurityNumber String
+  weight              String
+  height              String
+
+  relationship  String   // e.g. "Child", "Stepchild", "Other"
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+
+
+model InsuranceAgentInvite {
+  id          Int      @id @default(autoincrement())
+  email       String
+  invitedBy   User     @relation(fields: [invitedById], references: [id])
+  invitedById Int
+  invitedAt   DateTime @default(now())
+  acceptedAt  DateTime?
+}
+
+model Lead {
+  id         Int    @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  email      String
+  phone      String
+  policyType String
+  agentId    Int?
+  status    String   @default("new") // new, assigned, in_progress, closed
+  invites    LeadInvite[]
+  notes     LeadNote[]
+  deletedAt   DateTime? // null = active, non-null = soft deleted
+}
+
+model LeadNote {
+  id        Int      @id @default(autoincrement())
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  leadId    Int
+  agent     User?    @relation(fields: [agentId], references: [id])
+  agentId   Int?
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model LeadInvite {
+  id        Int      @id @default(autoincrement())
+  email     String
+  leadId    Int?
+  agentId   Int
+  createdAt DateTime @default(now())
+
+  acceptedAt DateTime?
+
+  lead  Lead? @relation(fields: [leadId], references: [id])
+  agent User @relation(fields: [agentId], references: [id])
+}
+
+
+
+
+
+model InsuranceCard {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+
+  relation  String   // "Self", "Spouse", "Child", "Other"
+  type      String   // "Health", "Dental", "Vision"
+  imageUrl  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AppAdmin {
+  id            Int      @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  username      String   @unique
+  email         String   @unique
+  password      String
+
+  users         User[]
+  agents        InsuranceAgent[]
+
+  isActive  Boolean  @default(true)
+
+   deletedAt        DateTime?     
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+}
+
+
+model Plan {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  planName    String
+  planType    String?          // e.g., PPO, HMO
+  coverageStart DateTime?
+  coverageEnd   DateTime?
+  networkType    String?       // e.g., In-Network, Out-of-Network
+  primaryCareRequired Boolean? // true/false
+  referralRequired     Boolean?
+  outOfNetwork         Boolean?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  benefits    Benefit[]
+}
+
+
+model ProviderNetwork {
+  id          Int        @id @default(autoincrement())
+  user        User       @relation(fields: [userId], references: [id])
+  userId      Int
+  name        String
+  description String?
+  providers   Provider[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Provider {
+  id        Int       @id @default(autoincrement())
+  network   ProviderNetwork? @relation(fields: [networkId], references: [id])
+  networkId Int?
+
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  type      String  
+  location  String   
+  name      String
+  specialty String?
+  phone     String?
+  email     String?
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+
+
+model Benefit {
+  id          Int      @id @default(autoincrement())
+  plan        Plan     @relation(fields: [planId], references: [id])
+  planId      Int
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+}
+
+model ClaimSupport {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+
+  type        String   // e.g., Health, Dental, Vision
+  paidAmount  Float    // how much was paid
+  maxCoverage Float?   // optional max coverage amount
+
+  phone       String?
+  email       String?
+  portalUrl   String?
+  officeHours String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+
+model Photo {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  url       String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user User  @relation(fields: [userId], references: [id])
+}
+
+
+model Company {
+  id             Int                  @id @default(autoincrement())
+  companyName    String
+  ein            String?               // EIN#, optional
+  salesmanCode   String?               // optional
+  industry       String                // industry *
+
+  streetAddress  String
+  city           String
+  state          String
+  zipCode        String
+  phoneNumber    String
+  companyEmail   String
+  website        String?               // optional
+  employeeSize   String                // employee count *
+
+  administrators CompanyAdministrator[]
+  employees       Employee[]  
+  businessCode    String?              @unique
+
+  users User[]
+  invites         EmployeeInvite[]
+  seoRequests     SEORequest[]
+  webDevelopmentRequests WebDevelopmentRequest[]
+
+  agentId        Int?
+  agent          InsuranceAgent? @relation(fields: [agentId], references: [id])
+
+  agreements     CompanyAgreement[]
+
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+}
+
+
+model Employee {
+  id        Int     @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String  @unique
+  phone     String?
+  username  String  @unique
+  password  String
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+  user   User?  @relation("EmployeeUser", fields: [userId], references: [id])
+  userId Int?   @unique
+  isActive  Boolean  @default(true)   // 👈 Soft delete flag
+  deletedAt DateTime?  
+  createdAt DateTime @default(now())
+  order     Int      @default(0)
+}
+
+
+model EmployeeInvite {
+  id          Int      @id @default(autoincrement())
+  email       String
+  companyId   Int
+  invitedAt   DateTime @default(now())
+  acceptedAt  DateTime?
+  company     Company  @relation(fields: [companyId], references: [id])
+}
+
+
+
+model CompanyAdministrator {
+  id            Int       @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  username      String    @unique
+  email         String    @unique
+  password      String
+  phoneNumber   String
+
+  company       Company   @relation(fields: [companyId], references: [id])
+  companyId     Int
+  sessions      Session[]
+
+  users         User[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model SEORequest {
+  id          Int       @id @default(autoincrement())
+  company     Company   @relation(fields: [companyId], references: [id])
+  companyId   Int
+
+  pageUrl     String
+  description String?      // optional description of the SEO request
+  status      String       @default("PENDING") // e.g., PENDING, IN_PROGRESS, COMPLETED
+
+  requestedAt DateTime     @default(now())
+  completedAt DateTime?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+
+model WebDevelopmentRequest {
+  id          Int       @id @default(autoincrement())
+  company     Company   @relation(fields: [companyId], references: [id])
+  companyId   Int
+
+  projectName String
+  description String?      // optional
+  status      String       @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+
+  requestedAt DateTime     @default(now())
+  completedAt DateTime?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+
+
+model Session {
+  id             Int                   @id @default(autoincrement())
+  authToken      String                @unique
+  user           User?                 @relation(fields: [userId], references: [id])
+  userId         Int?
+  companyAdmin   CompanyAdministrator? @relation(fields: [companyAdminId], references: [id])
+  companyAdminId Int?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @default(now())
+  deletedAt      DateTime?
+}
+
+
+model Subscription {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int
+  stripeId      String    @unique
+  stripeStatus  String?
+  stripePriceId String?
+  quantity      Int?
+  trialEndsAt   DateTime?
+  endsAt        DateTime?
+  startDate     DateTime
+  lastEventDate DateTime
+}
+
+
+model AuditTrail {
+  id        Int      @id @default(autoincrement())
+
+  // Link to user if known
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+
+  // Link to InsuranceApplication
+  insuranceApplication   InsuranceApplication? @relation(fields: [insuranceApplicationId], references: [id])
+  insuranceApplicationId Int?
+
+  // Core audit fields
+  signer       String   // signer name
+  email        String   // signer email
+  ip           String   // signer IP
+  documentHash String   // hash of signed doc
+  action       String   // e.g., "SIGNED", "VIEWED", "DECLINED"
+  metadata     Json?    // full JSON log
+
+  timestamp    DateTime @default(now())
+  createdAt    DateTime @default(now())
+  deletedAt    DateTime?
+}
+
+
+
+
+model PaymentAuthorization {
+  id                Int       @id @default(autoincrement())
+  user              User      @relation(fields: [userId], references: [id])
+  userId            Int
+
+  amount            Float
+  currency          String
+  paymentMethod     String
+  description       String?
+  fullName          String
+  email             String
+  signatureImageUrl String?   @db.Text
+  ipAddress         String?
+  pdfUrl            String?   @db.Text
+
+  // Billing info
+  cardNumber        String?
+  expiration        String?   // MM/YY format
+  billingAddress    String?
+  city              String?
+  state             String?
+  zip               String?
+
+  auditTrails       PaymentAuthorizationAuditTrail[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+
+model PaymentAuthorizationAuditTrail {
+  id                        Int       @id @default(autoincrement())
+  user                      User      @relation(fields: [userId], references: [id])
+  userId                    Int
+
+  paymentAuthorization      PaymentAuthorization @relation(fields: [paymentAuthorizationId], references: [id])
+  paymentAuthorizationId    Int
+
+  action                    String                // e.g. "SIGNED", "VIEWED"
+  signer                    String
+  email                     String
+  ip                        String
+  userAgent                 String
+  documentHash              String?
+  timestamp    DateTime @default(now())
+  createdAt                 DateTime              @default(now())
+  deletedAt    DateTime?
+}
+
+

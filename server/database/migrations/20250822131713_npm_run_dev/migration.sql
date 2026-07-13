@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "AppAdmin" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "appAdminId" INTEGER;
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_appAdminId_fkey" FOREIGN KEY ("appAdminId") REFERENCES "AppAdmin"("id") ON DELETE SET NULL ON UPDATE CASCADE;

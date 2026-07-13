@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: My API
+  version: 1.0.0
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 4
+        firstName:
+          type: string
+          example: Donavan
+        lastName:
+          type: string
+          example: Jones
+        email:
+          type: string
+          format: email
+          example: donavan@example.com
+        phone:
+          type: string
+          example: "1234567890"
+        location:
+          type: string
+          example: Miami, FL
+        bio:
+          type: string
+          example: "I love building apps."
+        avatar:
+          type: string
+          format: uri
+          example: "https://bucket.s3.region.amazonaws.com/avatars/123456.jpg"
+        insuranceCardImage:
+          type: string
+          format: uri
+          example: "https://bucket.s3.region.amazonaws.com/insurance-cards/123456.jpg"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  /api/user:
+    post:
+      summary: Update authenticated user profile
+      description: Updates the current user's profile. Requires a Bearer token.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                location:
+                  type: string
+                bio:
+                  type: string
+      responses:
+        '200':
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized — missing or invalid token
+        '500':
+          description: Failed to update user profile

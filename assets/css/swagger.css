@@ -1,0 +1,46 @@
+/* Light mode (default) */
+.swagger-ui .opblock-summary {
+  color: #1d4ed8 !important; /* blue-600 */
+}
+.swagger-ui .opblock-summary:hover {
+  color: #9333ea !important; /* purple-600 */
+}
+.swagger-ui .opblock-description-wrapper p,
+.swagger-ui .opblock-external-docs-wrapper p,
+.swagger-ui .opblock-title_normal p,
+.swagger-ui .response-col_status, .swagger-ui table thead tr td,
+.swagger-ui .tab li button.tablinks,
+.renderedMarkdown, .swagger-ui .response-col_links,
+.opblock-summary-path, .opblock-summary-description, .models-control, .swagger-ui .model-title, .swagger-ui .opblock-tag, .response-control-media-type__title,
+.swagger-ui table thead tr th, .swagger-ui .parameter__name, .swagger-ui .parameter__type, .swagger-ui .parameter__in, .servers-title, .title, .renderedMarkdown p {
+  color: #111827 !important; /* gray-900 */
+}
+
+.swagger-ui .opblock-control-arrow .arrow path, .expand-operation, .unlocked {
+  fill: #111827 !important; /* gray-900 */
+}
+
+/* Dark mode */
+.dark .swagger-ui .opblock-summary {
+  color: #60a5fa !important; /* blue-400 */
+}
+.dark .swagger-ui .opblock-summary:hover {
+  color: #c084fc !important; /* purple-400 */
+}
+.dark .swagger-ui .opblock-description-wrapper p,
+.dark .swagger-ui .opblock-external-docs-wrapper p,
+.dark .swagger-ui .opblock-title_normal p,
+.dark .swagger-ui .response-col_status, .dark .swagger-ui table thead tr td, .dark .swagger-ui .tab li button.tablinks,
+.dark .renderedMarkdown, .dark .swagger-ui .response-col_links,
+.dark .opblock-summary-path, .dark .opblock-summary-description, .dark .models-control, .dark .swagger-ui .model-title, .dark .model,
+.dark .swagger-ui .opblock-tag, .dark .response-control-media-type__title, .dark .swagger-ui table thead tr th, .dark .swagger-ui .parameter__name, .dark .swagger-ui .parameter__type, .dark .swagger-ui .parameter__in, .dark .servers-title, .dark .title, .dark .renderedMarkdown p {
+  color: #ffffff !important;
+}
+
+.dark .swagger-ui .opblock-control-arrow .arrow path, .dark .expand-operation, .dark .unlocked {
+  fill: #ffffff !important;
+}
+
+.dark .scheme-container{
+     background: #3b4151 !important;
+}
