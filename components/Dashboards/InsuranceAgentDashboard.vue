@@ -41,7 +41,7 @@
                 </NuxtLink>
               </div>
 
-              <!-- Tab Content  -->
+              <!-- Tab Content   -->
               <Transition name="fade-slide" mode="out-in">
                 <div :key="tab">
                   <!-- <InsuranceAgentLeadList v-if="tab==='Leads'"/> -->
