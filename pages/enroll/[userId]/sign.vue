@@ -97,7 +97,7 @@
           </button>
         </div>
         <p v-if="method === 'code'" class="text-sm text-gray-500 dark:text-gray-300 mb-4 -mt-2">
-          Send the code to the enrollee — it goes to their email (or phone) on file. Ask them to read it back, then enter it below.
+          Send the code to the enrollee — it goes to their email on file. Ask them to read it back, then enter it below.
         </p>
 
         <!-- Draw signature -->
@@ -114,17 +114,13 @@
         <!-- 6-digit code -->
         <div v-else class="space-y-4">
           <div class="flex items-center space-x-3">
-            <select v-model="codeChannel" class="px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white">
-              <option value="email">Email code</option>
-              <option value="sms">Text (SMS) code</option>
-            </select>
             <button
               type="button"
               :disabled="sendingCode"
               class="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50 hover:bg-blue-700 dark:bg-[#046937] dark:hover:bg-[#058a45]"
               @click="sendCode"
             >
-              {{ sendingCode ? 'Sending…' : codeSentTo ? 'Resend Code' : 'Send Code' }}
+              {{ sendingCode ? 'Sending…' : codeSentTo ? 'Resend Code' : 'Email Code' }}
             </button>
           </div>
           <p v-if="codeSentTo" class="text-sm text-green-600 dark:text-green-400">
@@ -205,7 +201,6 @@ const method = ref<'signature' | 'code'>('code')
 const consent = ref(false)
 const sigPad = ref<any>(null)
 
-const codeChannel = ref<'email' | 'sms'>('email')
 const codeSentTo = ref('')
 const codeExpiry = ref(10)
 const code = ref('')
@@ -266,7 +261,7 @@ async function sendCode() {
     const res: any = await $fetch(`/api/applications/${application.value.id}/send-code`, {
       method: 'POST',
       headers: useEnrollmentAuthHeaders(),
-      body: { channel: codeChannel.value },
+      body: { channel: 'email' },
     })
     codeSentTo.value = res.sentTo
     codeExpiry.value = res.expiresInMinutes
