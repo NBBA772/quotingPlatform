@@ -65,6 +65,9 @@ export default defineEventHandler(async (event) => {
     const messageText = `Your signature code for your insurance application is ${code}. It expires in ${CODE_TTL_MINUTES} minutes.`
 
     if (channel === 'sms') {
+      if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+        throw createError({ statusCode: 501, statusMessage: 'Text messaging is not configured — set the TWILIO_* environment variables' })
+      }
       const client = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
       await client.messages.create({
         to: sentTo,
@@ -72,6 +75,9 @@ export default defineEventHandler(async (event) => {
         body: messageText,
       })
     } else {
+      if (!process.env.RESEND_API_KEY) {
+        throw createError({ statusCode: 501, statusMessage: 'Email is not configured — set the RESEND_API_KEY environment variable' })
+      }
       const resend = new Resend(process.env.RESEND_API_KEY)
       const { error } = await resend.emails.send({
         from: 'noreply@updates.businessbenefitalliance.com',
