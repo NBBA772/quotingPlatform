@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
     <div class="w-full max-w-2xl">
       
-      <!-- Header  -->
+      <!-- Header -->
       <div class="text-center mb-8">
         <div class="flex items-center justify-center space-x-2 mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
