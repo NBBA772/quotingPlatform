@@ -21,7 +21,6 @@ export default defineEventHandler(async (event) => {
         await handleSubscriptionChange(subscription, stripeEvent.created);
         break;
       default:
-        console.log(`Unhandled event type ${stripeEvent.type}`);
     }
 
     return `handled ${stripeEvent.type}.`;

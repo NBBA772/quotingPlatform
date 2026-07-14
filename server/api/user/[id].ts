@@ -3,7 +3,6 @@ import prisma from "~/server/database/client";
 export default defineEventHandler(async (event) => {
   try {
     const { id } = event.context.params || {};
-    console.log("🔍 ID from params:", id);
 
     const userId = parseInt(id, 10);
 
@@ -20,18 +19,12 @@ export default defineEventHandler(async (event) => {
     });
 
     if (!user) {
-      console.log("⚠️ User not found for ID:", userId);
       throw createError({ statusCode: 404, message: "User not found" });
     }
 
     // Log the details of the liveStream
     if (user.liveStream) {
-      console.log("🔴 Live Stream Details:");
-      console.log("Channel ARN:", user.liveStream.channelArn);
-      console.log("Ingest Endpoint:", user.liveStream.ingestEndpoint);
-      console.log("Playback URL:", user.liveStream.playbackUrl);
     } else {
-      console.log("⚠️ No live stream found for this user.");
     }
 
     // Remove sensitive data like password before returning the user data

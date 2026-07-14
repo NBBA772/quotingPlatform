@@ -2,7 +2,6 @@ import prisma from '~/server/database/client'
 
 export default defineEventHandler(async (event) => {
   const userId = Number(event.context.params.userId)
-  console.log('[DEBUG] Fetching application for userId:', userId)
 
   if (isNaN(userId)) {
     console.warn('[WARN] Invalid userId:', event.context.params.userId)
@@ -35,11 +34,9 @@ export default defineEventHandler(async (event) => {
 
 
     if (!application) {
-      console.log('[DEBUG] No application found for userId:', userId)
       return null
     }
 
-    console.log('[DEBUG] Fetched application:', application)
     return {application, bCode}
 
   } catch (err) {

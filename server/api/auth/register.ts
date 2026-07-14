@@ -146,7 +146,6 @@ export default eventHandler(async (event: H3Event) => {
   try {
     // 1. Get form data
     const data = await registerRequest(event)
-    console.log('Incoming registration data:', data)
 
     // 2. Validate user
     const validation = await validateUser(data)
@@ -175,7 +174,6 @@ export default eventHandler(async (event: H3Event) => {
         loginType: 'email',
       },
     })
-    console.log('User created:', user)
 
     async function generateUniqueBusinessCode() {
       let code: string
@@ -214,7 +212,6 @@ export default eventHandler(async (event: H3Event) => {
         businessCode,   // <-- Add the generated code here
       },
     })
-    console.log('Company created:', company, 'Business Code:', businessCode)
 
     // 7. Create CompanyAdministrator linked to company and user
     const companyAdmin = await prisma.companyAdministrator.create({
@@ -229,7 +226,6 @@ export default eventHandler(async (event: H3Event) => {
         users: { connect: { id: user.id } },
       },
     })
-    console.log('CompanyAdmin created:', companyAdmin)
 
     // 8. Update User to reference companyAdmin and company
     const updatedUser = await prisma.user.update({
@@ -239,11 +235,9 @@ export default eventHandler(async (event: H3Event) => {
         companyId: company.id,
       },
     })
-    console.log('Updated user with companyAdmin and company:', updatedUser)
 
     // 9. Create session
     const session = await makeSession(updatedUser, event)
-    console.log('Session created:', session)
     return {
       session,
       company, // <-- add this line

@@ -75,7 +75,6 @@ export default defineEventHandler(async (event) => {
           },
         });
 
-        console.log("All agents busy, lead queued:", leadData);
         createdLeads.push({ lead, assignedAgent: null });
         continue;
       }

@@ -121,12 +121,10 @@ const userId = ref<number | null>(null);
 const fetchLeads = async () => {
   try {
     const res = await $fetch("/api/leads/accepted", { method: "GET" });
-    console.log('API response:', res);
     
     // The employees array now includes the hasSigned property from the backend
     leads.value = res.assigned || [];
     
-    console.log('Processed leads:', leads.value);
   } catch (err: any) {
     error.value = err.message || "Failed to fetch leads";
   } finally {

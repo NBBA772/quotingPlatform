@@ -12,8 +12,6 @@ export default defineEventHandler(async (event) => {
     include: { user: { include: { paymentAuthorizations: true } } },
   });
 
-  console.log("User:", session?.user);
-  console.log("paymentAuthorizations:", session?.user?.paymentAuthorizations);
 
   if (!session?.user)
     throw createError({ statusCode: 401, message: "Unauthorized" });
@@ -23,7 +21,6 @@ export default defineEventHandler(async (event) => {
     where: { userId: session.user.id },
   });
 
-  console.log("✅ paymentAuthorizations:", paymentAuthorizations);
 
   return paymentAuthorizations;
 });

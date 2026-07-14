@@ -124,7 +124,6 @@ async function submitForm() {
 
     const data = await response.json();
     alert('PDF uploaded successfully!');
-    console.log('API response:', data);
 
     // 3️⃣ Request a signed download URL
     const signedResponse = await fetch(`/api/applications/download/${data.application.id}`, {

@@ -86,12 +86,10 @@ export default defineEventHandler(async (event) => {
   const employeeId = Number(event.context.params?.id || query.id);
 
   if (!employeeId) {
-    console.log("DEBUG: No employee ID provided");
     return { error: "Employee ID is required" };
   }
 
   try {
-    console.log(`DEBUG: Fetching plan details for employee id=${employeeId}`);
 
     const employee = await prisma.employee.findUnique({
       where: { id: employeeId },
@@ -128,7 +126,6 @@ export default defineEventHandler(async (event) => {
       })),
     };
 
-    console.log("DEBUG: Plan details response:", response);
     return response;
   } catch (err) {
     console.error("DEBUG: Error fetching plan details:", err);

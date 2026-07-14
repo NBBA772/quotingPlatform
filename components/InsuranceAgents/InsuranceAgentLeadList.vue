@@ -171,21 +171,17 @@ const handleClickOutside = (event: MouseEvent) => {
 const subscribeToLeads = () => {
   const authToken = Cookies.get('auth_token')
   if (!authToken) {
-    console.log('[SSE] No auth token found on client')
     return
   }
 
-  console.log('[SSE] Connecting to leads stream...')
   sse = new EventSource('/api/leads/services/stream')
 
   sse.onopen = () => console.log('[SSE] Connection opened')
   sse.onmessage = (event) => {
     try {
-      console.log('[SSE] Message received:', event.data)
       const newLead = JSON.parse(event.data)
       newLead.menuOpen = false
       leads.value.unshift(newLead)
-      console.log('[SSE] Lead added:', newLead)
     } catch (err) {
       console.error('[SSE] Invalid message:', err)
     }

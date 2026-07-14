@@ -1,7 +1,6 @@
 import crypto from 'crypto'
 import { readBody, createError } from 'h3'
 import { Resend } from 'resend'
-import twilio from 'twilio'
 import prisma from '~/server/database/client'
 import { requireAuthUser, assertCanManageApplication, getApplicationOrThrow } from '~/server/utils/enrollmentAuth'
 
@@ -68,6 +67,9 @@ export default defineEventHandler(async (event) => {
       if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
         throw createError({ statusCode: 501, statusMessage: 'Text messaging is not configured — set the TWILIO_* environment variables' })
       }
+      // Lazy import: twilio's module-level load breaks the whole route on
+      // Vercel, and the email path doesn't need it at all
+      const { default: twilio } = await import('twilio')
       const client = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
       await client.messages.create({
         to: sentTo,

@@ -77,7 +77,6 @@ const removeSupport = (index: number) => localSupports.value.splice(index, 1);
 
 const saveSupports = async () => {
   if (props.mock) {
-    console.log("Mock save:", localSupports.value);
     alert("✅ Mock: Claim supports saved successfully");
     return;
   }

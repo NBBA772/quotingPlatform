@@ -57,7 +57,6 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    console.log("Reorder payload:", body);
 
     // Perform batch updates
     await Promise.all(

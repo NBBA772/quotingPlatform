@@ -56,7 +56,6 @@ async function registerAppAdmin() {
     })
 
     alert('✅ AppAdmin account created successfully!')
-    console.log(response)
     window.location.href = '/login'
   } catch (err: any) {
     console.error('Error registering AppAdmin:', err)

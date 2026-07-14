@@ -6,6 +6,5 @@ export default defineEventHandler(async (event) => {
     where: { businessCode },
     data: { agentId }
   })
-  console.log('Updated company:', updated)
   return { success: true }
 })

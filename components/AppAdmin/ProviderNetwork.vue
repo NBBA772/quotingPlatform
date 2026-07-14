@@ -32,7 +32,6 @@ const fetchProviders = async () => {
     const res = await fetch(`/api/providers/${props.userId}`);
     const data = await res.json();
     localProviders.value = data.providers || [];
-    console.log("Loaded providers:", data.providers);
   } catch (err) {
     console.error("Failed to fetch providers", err);
   } finally {
@@ -57,12 +56,9 @@ const removeProvider = (index: number) => localProviders.value.splice(index, 1);
 
 const saveProviders = async () => {
   if (!props.userId) {
-    console.log("Cannot save: userId not set");
     return;
   }
 
-  console.log("Save button pressed, userId:", props.userId);
-  console.log("Providers to save:", localProviders.value);
 
   try {
     const res = await fetch(`/api/providers/${props.userId}`, {
@@ -72,7 +68,6 @@ const saveProviders = async () => {
     });
     const data = await res.json();
     localProviders.value = data.providers;
-    console.log("Providers saved:", data.providers);
     alert("Providers saved successfully");
   } catch (err) {
     console.error("Failed to save providers", err);

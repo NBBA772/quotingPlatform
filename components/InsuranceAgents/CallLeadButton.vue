@@ -37,7 +37,6 @@ const callLead = async () => {
       },
     });
 
-    console.log("Call triggered:", res);
     alert(`Calling ${props.leadPhone}...`);
   } catch (err: any) {
     console.error("Error starting call:", err);

@@ -5,7 +5,6 @@ import { getHeader, createError } from "h3";
 export default defineEventHandler(async (event) => {
   try {
     const authHeader = getHeader(event, "authorization");
-    console.log("🔹 Auth Header:", authHeader);
 
     if (!authHeader) {
       console.error("❌ No Authorization header found");
@@ -13,10 +12,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const token = authHeader.replace("Bearer ", "").trim();
-    console.log("🔹 Token extracted:", token);
 
     const session = await getUserByAuthToken(token);
-    console.log("🔹 Session from token:", session);
 
     if (!session) {
       console.error("❌ Invalid or expired session");
@@ -34,7 +31,6 @@ export default defineEventHandler(async (event) => {
       orderBy: { order: "asc" },   // 👈 ensure correct order
     });
 
-    console.log("✅ Employees fetched:", employees.length);
     return employees;
   } catch (error) {
     console.error("❌ Error fetching employees:", error);

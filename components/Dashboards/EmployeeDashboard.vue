@@ -99,7 +99,6 @@ const authCookie = useAuthCookie()
 watch(
   () => authCookie.value,
   (newVal, oldVal) => {
-    console.log('Auth cookie changed from', oldVal, 'to', newVal)
     if (newVal) {
       getLoggedInUser().then(data => {
         loggedInUser.value = data
@@ -158,11 +157,9 @@ async function getLoggedInUser() {
       console.error("Auth cookie is missing.");
       return null;
     }
-    console.log("Fetching fresh user data...");
     const response = await $fetch(`/api/user`, {
       headers: { Authorization: `Bearer ${authCookie.value}` },
     });
-    console.log("✅ User fetched:", response);
     return response.user || response;
   } catch (error) {
     console.error("Error in getLoggedInUser:", error.message || error);
@@ -242,32 +239,23 @@ async function logout() {
 onMounted(async () => {
   moveUnderline()
   if (!authCookie.value) {
-    console.log("❌ No auth token found.")
     return
   }
 
-  console.log("✅ Fetching user...")
   loggedInUser.value = await getLoggedInUser()
-  console.log("🔹 loggedInUser:", loggedInUser.value)
 
   if (loggedInUser.value?.companyId) {
     await fetchCompanyInfo(loggedInUser.value.companyId)
-    console.log("🔹 Company info:", company.value)
   }
 
   await fetchPhotos()
-  console.log("🔹 Photos loaded:", photos.value.length)
 
   if (loggedInUser.value?.id) {
-    console.log(`🔹 Checking if userId=${loggedInUser.value.id} is AppAdmin`)
     isAppAdmin.value = await useAppAdmin(loggedInUser.value.id)
-    console.log("🔹 isAppAdmin.value:", isAppAdmin.value)
 
     // Correct usage: just call it once
     isCompanyAdmin.value = await useCompanyAdmin(loggedInUser.value.id)
-    console.log("🔹 isCompanyAdmin.value:", isCompanyAdmin.value)
   } else {
-    console.log("❌ loggedInUser.id not available for admin checks")
   }
 })
 

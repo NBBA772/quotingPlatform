@@ -378,7 +378,6 @@ const selectedMonthlyFee = computed(() => {
 const totalOneTimeFee = computed(() => {
   return paymentAuthorizations.value.reduce((sum, auth) => {
     if (auth.plan && planPrices[auth.plan] && insuranceApplications.value[0].waiveOneTimeFee !== true) {
-      console.log("insuranceApplications ", insuranceApplications.value[0].waiveOneTimeFee)
       return sum + planPrices[auth.plan].oneTime
     }
     return sum

@@ -67,12 +67,10 @@ export default defineEventHandler(async (event) => {
   const employeeId = Number(event.context.params?.id || query.id);
 
   if (!employeeId) {
-    console.log("DEBUG: No employee ID provided");
     return { error: "Employee ID is required" };
   }
 
   try {
-    console.log(`DEBUG: Fetching employee with id=${employeeId}`);
 
     const employee = await prisma.employee.findUnique({
       where: { id: employeeId },
@@ -97,7 +95,6 @@ export default defineEventHandler(async (event) => {
       providerNetworks: networks,
     };
 
-    console.log("DEBUG: Response object:", response);
     return response;
   } catch (err) {
     console.error("DEBUG: Error fetching provider network:", err);

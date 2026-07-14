@@ -28,15 +28,6 @@ export default defineEventHandler(async (event) => {
       orderBy: { id: "asc" },
     });
 
-    console.log(
-      "All agents:",
-      allAgents.map(a => ({
-        id: a.id,
-        userId: a.userId,
-        phone: a.phone,
-        isOnCall: a.isOnCall
-      }))
-    );
 
     // Only agents who are not on call
     const availableAgents = allAgents.filter(a => !a.isOnCall);

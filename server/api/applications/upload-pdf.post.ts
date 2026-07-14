@@ -24,8 +24,6 @@ export default defineEventHandler(async (event) => {
       });
     });
 
-    console.log("Parsed fields:", fields);
-    console.log("Parsed files:", files);
 
     const { groupNumber, groupName, healthPlan } = fields;
 
@@ -50,7 +48,6 @@ export default defineEventHandler(async (event) => {
     );
 
     const pdfUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${s3Key}`;
-    console.log("PDF uploaded to S3:", pdfUrl);
 
     // 3️⃣ Authenticated user
     const authHeader = getHeader(event, "authorization") || "";
@@ -73,7 +70,6 @@ export default defineEventHandler(async (event) => {
     }
     });
 
-    console.log("Created application:", application);
 
     return { application };
   } catch (err: any) {

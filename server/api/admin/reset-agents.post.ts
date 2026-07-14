@@ -8,6 +8,5 @@ export default defineEventHandler(async () => {
     data: { isAvailable: false },
   });
 
-  console.log(`Reset ${updated.count} agents to unavailable`);
   return { success: true, updated: updated.count };
 });

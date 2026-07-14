@@ -52,7 +52,6 @@ async function getLoggedInUser() {
     });
 
     loggedInUser.value = response.user || response;
-console.log("loggedInUser.value.id ", loggedInUser.value.id)
     if (loggedInUser.value?.id) {
       isAppAdmin.value = await useAppAdmin(loggedInUser.value.id)
       isCompanyAdmin.value = await useCompanyAdmin(loggedInUser.value.id)

@@ -77,7 +77,6 @@ import { hash } from 'bcryptjs'
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    console.log('Request body:', body)
 
     const { businessCode, firstName, lastName, email, phone, username, password } = body
 

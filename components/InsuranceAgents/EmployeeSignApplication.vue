@@ -1554,16 +1554,13 @@ function formatForDateInput(dateStr: string | null | undefined): string {
 onMounted(async () => {
   try {
     const authToken = useCookie('auth_token').value
-    console.log('Auth token:', authToken)
 
     const res: InsuranceApplication[] = await $fetch('/api/applications/my', {
       headers: { Authorization: `Bearer ${authToken}` }
     })
     
-    console.log('Raw response from API:', res)
 
     applications.value = res.map((app, index) => {
-      console.log(`Processing application #${index}:`, app)
 
       const normalized = {
         ...app,
@@ -1577,11 +1574,9 @@ onMounted(async () => {
             : []
       }
 
-      console.log(`Normalized application #${index}:`, normalized)
       return normalized
     }) as any
 
-    console.log('All normalized applications:', applications.value)
   } catch (err: any) {
     console.error('Error fetching applications:', err)
   }

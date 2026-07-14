@@ -27,7 +27,6 @@ export default defineEventHandler(async (event) => {
     data: { isOnCall },
   });
 
-  console.log(`Updated rows: ${updated.count} | Agent ${agentPhone} isOnCall=${isOnCall} (CallStatus: ${CallStatus})`);
 
   // Only assign pending lead if call ended
   if (callEndedStatuses.includes(CallStatus)) {
@@ -61,7 +60,6 @@ export default defineEventHandler(async (event) => {
 
       // Publish update to Redis for SSE
       await safePublish(`leads_channel:${agent.userId}`, JSON.stringify(updatedLead));
-      console.log("Queued lead assigned and call triggered:", updatedLead.id);
     }
   }
 

@@ -59,7 +59,6 @@ async function loadData() {
 
   const agentRes = await $fetch('/api/insurance-agent/list')
   agents.value = agentRes.agents || []
-  console.log("agentRes.agents ", agentRes.agents)
 }
 
 async function assignAgent(inviteId: string) {

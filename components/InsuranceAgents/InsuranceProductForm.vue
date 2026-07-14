@@ -609,11 +609,9 @@ function populateForm(app: any) {
 
 async function fetchApplication(userId) {
   try {
-    console.debug('[DEBUG] Fetching application for userId:', userId);
     const res = await fetch(`/api/applications/${userId}`);
     
     if (res.status === 204) {
-      console.debug('[DEBUG] No application found');
       insuranceApplication.value = null; // reset form
       return;
     }
@@ -624,7 +622,6 @@ const data = await res.json()
 
 // now unwrap
 if (data.application && data.application.userId === userId) {
-  console.debug('[DEBUG] Fetched application:', data.application)
   insuranceApplication.value = data.application
 } else {
   console.warn('[WARN] Fetched application does not match current userId')
@@ -640,7 +637,6 @@ if (data.application && data.application.userId === userId) {
 
 
 watch(() => props.userId, async (newUserId) => {
-  console.log('[DEBUG] userId changed:', newUserId);
   await fetchApplication(newUserId);
 });
 
@@ -659,16 +655,13 @@ watch(
 
 async function fetchAndPopulateApplication(userId: number) {
   try {
-    console.log('[DEBUG] Fetching application for userId:', userId)
     const res = await $fetch(`/api/applications/${userId}`)
 
     if (!res || !res.application) {
-      console.log('[DEBUG] No application found, form will remain mostly blank')
       return
     }
 
     const app = res.application
-    console.log('[DEBUG] Fetched application:', app)
     populateForm(app)
     // An existing application opens in the saved state with an Edit button
     if (app.id) saved.value = true
@@ -685,11 +678,9 @@ async function getLoggedInUser() {
       console.error("Auth cookie is missing.")
       return null
     }
-    console.log("Fetching fresh user data...")
     const response = await $fetch(`/api/user`, {
       headers: { Authorization: `Bearer ${authCookie.value}` },
     })
-    console.log("✅ User fetched:", response)
     return response.user || response
   } catch (error: any) {
     console.error("Error in getLoggedInUser:", error.message || error)
@@ -703,7 +694,6 @@ const loggedInUser = ref<any>(null)
 
 onMounted(async () => {
   loggedInUser.value = await getLoggedInUser()
-console.log("loggedInUser.value?.id ", loggedInUser)
   if (props.userId) {
     fetchAndPopulateApplication(props.userId)
   }

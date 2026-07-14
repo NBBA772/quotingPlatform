@@ -1,7 +1,6 @@
 import crypto from 'crypto'
 import { readBody, createError } from 'h3'
 import { Resend } from 'resend'
-import twilio from 'twilio'
 import prisma from '~/server/database/client'
 
 const CODE_TTL_MINUTES = 10
@@ -64,6 +63,7 @@ export default defineEventHandler(async (event) => {
     const messageText = `Your signing code for the ${agreement.company.companyName} agreement is ${code}. It expires in ${CODE_TTL_MINUTES} minutes.`
 
     if (channel === 'sms') {
+      const { default: twilio } = await import('twilio')
       const client = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
       await client.messages.create({
         to: sentTo,

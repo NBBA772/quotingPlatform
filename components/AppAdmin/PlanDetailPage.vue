@@ -208,7 +208,6 @@ const fetchPlan = async () => {
 
 const savePlan = async () => {
   if (props.mock) {
-    console.log("Mock save:", localPlan.value);
     alert("✅ Mock: Plan saved successfully");
     return;
   }

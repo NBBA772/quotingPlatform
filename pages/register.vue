@@ -74,7 +74,6 @@ async function markInviteAccepted(inviteId: number) {
       method: "POST",
       body: { inviteId },
     });
-    console.log("Invite updated:", updated);
     return updated;
   } catch (err) {
     console.error("Failed to mark invite accepted:", err);
@@ -160,7 +159,6 @@ async function postRegisterForm() {
       if (selectedAgentId.value) {
         // Use the selected agent
         agentId = selectedAgentId.value;
-        console.log("Using selected agentId:", agentId);
         
         // Update the selected agent's lastAssignedAt timestamp
         await $fetch(`/api/insurance-agent/${agentId}/update-assignment`, {
@@ -176,7 +174,6 @@ async function postRegisterForm() {
           agent?: { id: number };
         };
         agentId = agentData?.agent?.id;
-        console.log("Round-robin assigned agentId:", agentId);
       }
       
       if (!agentId) throw new Error("No agent available");
@@ -203,12 +200,10 @@ try {
     leadId: null,
     acceptedAt: new Date(),
   };
-  console.log("Creating lead invite with payload:", invitePayload);
   const inviteData = await $fetch("/api/leads/create-invite", {
     method: "POST",
     body: invitePayload,
   });
-  console.log("Lead invite saved:", inviteData);
   inviteId = inviteData?.invite?.id;
 } catch (err) {
   console.error("Failed to save lead invite:", err);
@@ -218,7 +213,6 @@ try {
     // 6️⃣ Mark invite as accepted (optional redundancy)
     if (inviteId) {
       await markInviteAccepted(inviteId);
-      console.log("Invite accepted:", inviteId);
     }
 
     // 7️⃣ Redirect to dashboard

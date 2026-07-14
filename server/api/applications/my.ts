@@ -10,8 +10,6 @@ const session = await prisma.session.findUnique({
   where: { authToken },
   include: { user: { include: { insuranceApplications: true } } }
 })
-console.log('User:', session?.user)
-console.log('Applications:', session?.user?.insuranceApplications)
 
   if (!session?.user) throw createError({ statusCode: 401, message: 'Unauthorized' })
 

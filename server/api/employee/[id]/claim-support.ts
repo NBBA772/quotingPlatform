@@ -87,12 +87,10 @@ export default defineEventHandler(async (event) => {
   const employeeId = Number(event.context.params?.id || query.id);
 
   if (!employeeId) {
-    console.log("DEBUG: No employee ID provided");
     return { error: "Employee ID is required" };
   }
 
   try {
-    console.log(`DEBUG: Fetching claim support for employee id=${employeeId}`);
 
     // Fetch the employee and linked user with claim supports
     const employee = await prisma.employee.findUnique({
@@ -118,7 +116,6 @@ export default defineEventHandler(async (event) => {
       claimSupports: claims,
     };
 
-    console.log("DEBUG: Response object:", response);
     return response;
   } catch (err) {
     console.error("DEBUG: Error fetching claim support:", err);

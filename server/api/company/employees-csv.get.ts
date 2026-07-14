@@ -67,7 +67,6 @@ async function getCurrentUser(event: any) {
 export default defineEventHandler(async (event) => {
   try {
     const user = await getCurrentUser(event);
-    console.log("Final user object:", user);
 
     if (!user || !user.companyId) {
       console.error("User missing or has no companyId");

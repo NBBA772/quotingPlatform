@@ -52,12 +52,10 @@ import { defineEventHandler, getQuery } from "h3";
 export default defineEventHandler(async (event) => {
   const employeeId = Number(event.context.params?.id || getQuery(event).id);
   if (!employeeId) {
-    console.log("DEBUG: No employee ID provided");
     return { error: "Employee ID is required" };
   }
 
   try {
-    console.log(`DEBUG: Fetching insurance cards for employee id=${employeeId}`);
 
     const employee = await prisma.employee.findUnique({
       where: { id: employeeId },

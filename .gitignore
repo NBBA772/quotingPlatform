@@ -27,3 +27,5 @@ node_modules
 
 # SSL / Keys
 private-key-kingdomLive.pem
+.vercel
+.env*

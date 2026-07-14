@@ -25,7 +25,6 @@ export default defineEventHandler(async (event) => {
 
     // 2. Parse files
     const formData = await readMultipartFormData(event);
-    console.log("Received files:", formData.map(f => f.name));
     const avatarFile = formData.find((f) => f.name === "avatar");
     const coverFile = formData.find((f) => f.name === "cover");
     const insuranceCardFile = formData.find((f) => f.name === "insuranceCard");
