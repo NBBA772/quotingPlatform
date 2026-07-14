@@ -34,10 +34,10 @@
               <!-- Quick actions -->
               <div class="flex justify-end mb-4">
                 <NuxtLink
-                  to="/company-intake"
+                  to="/enrollee-intake"
                   class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-[#046937] dark:hover:bg-[#058a45]"
                 >
-                  + New Company
+                  + New Enrollee
                 </NuxtLink>
               </div>
 
@@ -76,7 +76,7 @@ const loggedInUser = ref(null)
 const editing = ref(false)
 const tabs = [
   // { key: 'Leads', label: 'Leads' },
-  { key: 'Companies', label: 'Companies' },
+  { key: 'Companies', label: 'Enrollees' },
 ]
 
 const tab = ref('Companies')

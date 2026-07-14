@@ -25,7 +25,7 @@
                   class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
           </div>
           <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Name of Enrollee</label>
+            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Agent Name</label>
             <input type="text" v-model="form.groupName"
                   class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
           </div>
@@ -36,17 +36,6 @@
               <option value="">Select coverage</option>
               <option v-for="tier in coverageTiers" :key="tier.value" :value="tier.value">{{ tier.label }}</option>
             </select>
-          </div>
-        </div>
-        <div>
-          <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">
-            Reason for Enrollment (Mark all that apply)
-          </label>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <label v-for="reason in reasonOptions" :key="reason" class="flex items-center">
-              <input type="checkbox" :value="reason" v-model="form.reasons" class="mr-2">
-              <span class="text-gray-700 dark:text-gray-300">{{ reason }}</span>
-            </label>
           </div>
         </div>
       </div>
@@ -141,56 +130,6 @@
           <div>
             <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">ZIP / Postal Code</label>
             <input type="text" v-model="form.zipCode" required
-                  class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Employment -->
-      <div class="border rounded-xl p-5 dark:border-gray-600 space-y-4">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Employment</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Hire Date</label>
-            <input type="date" v-model="form.hireDate"
-                  class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
-          </div>
-          <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Rehire Date</label>
-            <input type="date" v-model="form.rehireDate"
-                  class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
-          </div>
-          <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Location</label>
-            <input type="text" v-model="form.location"
-                  class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
-          </div>
-          <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Is this a division?</label>
-            <div class="flex items-center space-x-6 mt-2">
-              <label class="flex items-center">
-                <input type="radio" :value="true" v-model="form.isDivision" class="mr-2">
-                <span class="text-gray-700 dark:text-gray-300">Yes</span>
-              </label>
-              <label class="flex items-center">
-                <input type="radio" :value="false" v-model="form.isDivision" class="mr-2">
-                <span class="text-gray-700 dark:text-gray-300">No</span>
-              </label>
-            </div>
-          </div>
-          <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Parent Company</label>
-            <input type="text" v-model="form.parentCompany"
-                  class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
-          </div>
-          <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Hours Per Week</label>
-            <input type="text" v-model="form.hrsPerWeek"
-                  class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
-          </div>
-          <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Job Title</label>
-            <input type="text" v-model="form.jobTitle"
                   class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
           </div>
         </div>
@@ -350,11 +289,6 @@ definePageMeta({ middleware: 'auth' })
 
 const route = useRoute()
 const userId = Number(route.params.userId)
-
-const reasonOptions = [
-  'Open Enrollment', 'New Application', 'Newborn', 'Court Order',
-  'Dependent Addition', 'Loss of Coverage', 'Marriage', 'Divorce', 'Military Leave',
-]
 
 const coverageTiers = [
   { value: 'single', label: 'Single' },

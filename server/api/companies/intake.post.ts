@@ -29,9 +29,8 @@ export default defineEventHandler(async (event) => {
 
     const body = await readBody(event)
     const required = [
-      'companyName', 'industry', 'streetAddress', 'city', 'state', 'zipCode',
-      'phoneNumber', 'companyEmail', 'employeeSize',
-      'contactFirstName', 'contactLastName', 'contactEmail', 'contactPassword',
+      'contactFirstName', 'contactLastName', 'contactEmail', 'contactPhone', 'contactPassword',
+      'streetAddress', 'city', 'state', 'zipCode',
     ]
     for (const field of required) {
       if (!body[field] || !String(body[field]).trim()) {
@@ -42,29 +41,32 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Password must be at least 8 characters' })
     }
 
-    // The contact becomes an employee — reject up front if that email is taken
-    // by an employee of another company, instead of failing halfway through.
+    // The enrollee becomes an employee — reject up front if that email is
+    // already taken, instead of failing halfway through.
     const existingEmployee = await prisma.employee.findUnique({ where: { email: body.contactEmail } })
     if (existingEmployee) {
-      throw createError({ statusCode: 409, statusMessage: 'An employee with this contact email already exists' })
+      throw createError({ statusCode: 409, statusMessage: 'An enrollee with this email already exists' })
     }
 
     const businessCode = await generateUniqueBusinessCode()
+    const enrolleeName = `${String(body.contactFirstName).trim()} ${String(body.contactLastName).trim()}`.trim()
 
+    // The data model hangs off Company, so each individual enrollee gets a
+    // household record derived from their own details.
     const company = await prisma.company.create({
       data: {
-        companyName: body.companyName,
-        ein: body.ein || null,
-        salesmanCode: body.salesmanCode || null,
-        industry: body.industry,
+        companyName: enrolleeName,
+        ein: null,
+        salesmanCode: body.npn || null,
+        industry: 'Individual',
         streetAddress: body.streetAddress,
         city: body.city,
         state: body.state,
         zipCode: body.zipCode,
-        phoneNumber: body.phoneNumber,
-        companyEmail: body.companyEmail,
-        website: body.website || null,
-        employeeSize: String(body.employeeSize),
+        phoneNumber: body.contactPhone,
+        companyEmail: body.contactEmail,
+        website: null,
+        employeeSize: '1',
         businessCode,
         agentId: agent?.id ?? null,
       },
@@ -111,6 +113,35 @@ export default defineEventHandler(async (event) => {
       },
     })
 
+    // Seed the insurance application with the intake details so the
+    // enrollee's application opens prefilled: NPN, agent name, and their
+    // demographics. Best-effort — intake succeeds even if this fails.
+    try {
+      const existingApplication = await prisma.insuranceApplication.findFirst({
+        where: { userId: employeeUser.id },
+      })
+      if (!existingApplication) {
+        await prisma.insuranceApplication.create({
+          data: {
+            userId: employeeUser.id,
+            groupNumber: body.npn ? String(body.npn).trim() : '',
+            groupName: agent ? `${agent.firstName} ${agent.lastName}` : '',
+            firstName: body.contactFirstName,
+            lastName: body.contactLastName,
+            email: body.contactEmail,
+            phoneNumber: body.contactPhone,
+            streetAddress: body.streetAddress,
+            city: body.city,
+            state: body.state,
+            zipCode: body.zipCode,
+            isDivision: false,
+          },
+        })
+      }
+    } catch (err) {
+      console.error('Failed to seed application from intake:', err)
+    }
+
     // Welcome email — the password was set verbally on the call, so it is
     // never included here. Best-effort: the records already exist either way.
     let emailSent = false
@@ -120,11 +151,11 @@ export default defineEventHandler(async (event) => {
       const { error } = await resend.emails.send({
         from: 'noreply@updates.businessbenefitalliance.com',
         to: body.contactEmail,
-        subject: `Welcome to ${company.companyName} — Group #${businessCode}`,
+        subject: 'Welcome — your enrollment account is ready',
         html: `
           <p>Hello ${body.contactFirstName},</p>
           <p>${agent ? `${agent.firstName} ${agent.lastName}` : 'Your insurance agent'} has set up
-          <b>${company.companyName}</b> (Group #${businessCode}) and added you as a member.</p>
+          your enrollment account.</p>
           <p>You can log in at <a href="${origin}/login">${origin}/login</a> with your email
           (<b>${body.contactEmail}</b>) and the password ${isNewUser ? 'you set with your agent' : 'for your existing account'}.</p>
         `,
@@ -140,18 +171,18 @@ export default defineEventHandler(async (event) => {
       companyId: company.id,
       businessCode,
       employeeUserId: employeeUser.id,
-      employeeName: `${body.contactFirstName} ${body.contactLastName}`,
+      employeeName: enrolleeName,
       emailSent,
     }
   } catch (err: any) {
-    console.error('❌ Company intake error:', err)
+    console.error('❌ Enrollee intake error:', err)
     if (err?.code === 'P2002') {
       const fields = Array.isArray(err.meta?.target) ? err.meta.target.join(', ') : 'email, username, or phone'
       throw createError({ statusCode: 409, statusMessage: `An account with this ${fields} already exists` })
     }
     throw createError({
       statusCode: err.statusCode || 500,
-      statusMessage: err.statusMessage || err.message || 'Failed to create company',
+      statusMessage: err.statusMessage || err.message || 'Failed to add enrollee',
     })
   }
 })

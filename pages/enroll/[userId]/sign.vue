@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-3xl mx-auto p-6 bg-white dark:bg-[#3a4934] rounded-xl shadow-md my-8">
-    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Review & Sign</h2>
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Payment & Sign</h2>
     <EnrollSteps :current="4" />
 
     <div v-if="loading" class="text-gray-500 dark:text-gray-300">Loading…</div>
@@ -28,6 +28,28 @@
     </div>
 
     <template v-else>
+      <!-- 1. Payment first -->
+      <div class="mb-6">
+        <EnrollPaymentForm :application-id="application.id" @paid="paymentDone = true" />
+      </div>
+
+      <!-- 2. Review & sign, unlocked once payment is complete -->
+      <div v-if="!paymentDone" class="border rounded-xl p-5 mb-6 dark:border-gray-600">
+        <p class="text-gray-500 dark:text-gray-300 text-center">
+          Signing unlocks after the payment above is completed.
+        </p>
+        <div class="flex justify-start pt-4">
+          <button
+            type="button"
+            class="px-4 py-2 bg-gray-400 text-white rounded-lg"
+            @click="navigateTo(`/enroll/${userId}/coverage`)"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+
+      <template v-else>
       <!-- PDF generation / preview -->
       <div class="border rounded-xl p-5 mb-6 dark:border-gray-600">
         <div class="flex items-center justify-between mb-3">
@@ -59,20 +81,24 @@
           <button
             type="button"
             class="px-4 py-2 rounded-lg font-medium"
+            :class="method === 'code' ? 'bg-blue-600 text-white dark:bg-[#046937]' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+            @click="method = 'code'"
+          >
+            6-Digit Code
+          </button>
+          <button
+            v-if="isOwner"
+            type="button"
+            class="px-4 py-2 rounded-lg font-medium"
             :class="method === 'signature' ? 'bg-blue-600 text-white dark:bg-[#046937]' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
             @click="method = 'signature'"
           >
             Draw Signature
           </button>
-          <button
-            type="button"
-            class="px-4 py-2 rounded-lg font-medium"
-            :class="method === 'code' ? 'bg-blue-600 text-white dark:bg-[#046937]' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-            @click="method = 'code'"
-          >
-            Use 6-Digit Code
-          </button>
         </div>
+        <p v-if="method === 'code'" class="text-sm text-gray-500 dark:text-gray-300 mb-4 -mt-2">
+          Send the code to the enrollee — it goes to their email (or phone) on file. Ask them to read it back, then enter it below.
+        </p>
 
         <!-- Draw signature -->
         <div v-if="method === 'signature'">
@@ -145,6 +171,7 @@
           </button>
         </div>
       </div>
+      </template>
     </template>
   </div>
 </template>
@@ -168,8 +195,13 @@ const application = ref<any>(null)
 const previewUrl = ref('')
 const signed = ref(false)
 const downloadUrl = ref('')
+const paymentDone = ref(false)
 
-const method = ref<'signature' | 'code'>('signature')
+// Only the enrollee themselves may draw a signature; an agent working the
+// application on their behalf must use the 6-digit code
+const isOwner = ref(false)
+
+const method = ref<'signature' | 'code'>('code')
 const consent = ref(false)
 const sigPad = ref<any>(null)
 
@@ -180,6 +212,11 @@ const code = ref('')
 
 onMounted(async () => {
   try {
+    const me: any = await $fetch('/api/user', {
+      headers: useEnrollmentAuthHeaders(),
+    }).catch(() => null)
+    isOwner.value = (me?.user?.id ?? me?.id) === userId
+
     const { application: app } = await fetchEnrollmentApplication(userId)
     application.value = app
     if (!app) {
@@ -188,6 +225,16 @@ onMounted(async () => {
     }
     if (app.signedAt) {
       signed.value = true
+    } else {
+      // Payment happens before signing — check whether it's already done
+      try {
+        const info: any = await $fetch(`/api/applications/${app.id}/payment-info`, {
+          headers: useEnrollmentAuthHeaders(),
+        })
+        paymentDone.value = !!info?.alreadyPaid
+      } catch {
+        paymentDone.value = false
+      }
     }
   } catch (err: any) {
     error.value = err?.data?.statusMessage || err?.message || 'Failed to load application'

@@ -5,13 +5,9 @@
 
     <template v-else-if="m">
       <!-- Stat cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-4">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
         <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
-          <p class="text-xs text-gray-500 dark:text-gray-400">Companies</p>
-          <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ m.companies }}</p>
-        </div>
-        <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
-          <p class="text-xs text-gray-500 dark:text-gray-400">Clients</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Enrollees</p>
           <p class="text-2xl font-bold text-gray-800 dark:text-white">{{ m.clients }}</p>
         </div>
         <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
@@ -76,7 +72,7 @@
             class="flex items-center justify-between border-l-4 border-blue-500 pl-3 py-1"
           >
             <span class="text-gray-700 dark:text-gray-300">
-              <b>{{ n.name }}</b> ({{ n.company }}) — no application started
+              <b>{{ n.name }}</b> — no application started
             </span>
             <NuxtLink :to="`/enroll/${n.userId}/applicant`" class="text-blue-600 dark:text-green-400 hover:underline ml-4">
               Enroll

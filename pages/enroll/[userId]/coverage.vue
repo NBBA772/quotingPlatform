@@ -33,6 +33,10 @@
             step="0.01"
             class="w-full md:w-64 px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white"
           />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <template v-if="coverageTier">Auto-priced for {{ tierLabels[coverageTier] || coverageTier }} coverage</template>
+            <template v-else>Select coverage on the Applicant step to auto-price</template>
+          </p>
         </div>
       </div>
 
@@ -102,7 +106,7 @@
           class="px-6 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50 hover:bg-blue-700 dark:bg-[#046937] dark:hover:bg-[#058a45]"
           @click="next"
         >
-          {{ saving ? 'Saving…' : 'Next: Review & Sign' }}
+          {{ saving ? 'Saving…' : 'Next: Payment & Sign' }}
         </button>
       </div>
     </template>
@@ -188,8 +192,18 @@ const dentalVision = ref<boolean | null>(null)
 const dentalVisionPrice = ref<number | null>(null)
 const ancillaryPlans = ref<{ planName: string; product: string; price: number | null }[]>([])
 
+// Dental & Vision monthly rates by coverage tier
+const dentalVisionTierRates: Record<string, number> = {
+  single: 79.95,
+  individual_spouse: 159.95,
+  individual_child: 199.95,
+  family: 279.95,
+}
+
 watch(dentalVision, (val) => {
-  if (val === true && dentalVisionPrice.value == null) dentalVisionPrice.value = 79.95
+  if (val === true && !dentalVisionPrice.value) {
+    dentalVisionPrice.value = coverageTier.value ? dentalVisionTierRates[coverageTier.value] ?? null : null
+  }
   if (val === false) dentalVisionPrice.value = 0
 })
 

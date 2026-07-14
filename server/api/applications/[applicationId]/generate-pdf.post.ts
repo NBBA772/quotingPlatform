@@ -96,12 +96,8 @@ export default defineEventHandler(async (event) => {
 
     heading('Enrollee')
     line('NPN', app.groupNumber)
-    line('Name of Enrollee', app.groupName)
+    line('Agent Name', app.groupName)
     line('Coverage', app.coverageTier ? tierLabels[app.coverageTier] || app.coverageTier : null)
-
-    if (app.reasons) {
-      line('Reason for Enrollment', app.reasons.split(',').filter(Boolean).join(', '))
-    }
 
     heading('Applicant')
     line('Name', [app.firstName, app.middleName, app.lastName].filter(Boolean).join(' '))
@@ -111,13 +107,6 @@ export default defineEventHandler(async (event) => {
     line('Date of Birth', app.dateOfBirth ? new Date(app.dateOfBirth).toLocaleDateString('en-US') : null)
     line('Gender', app.gender)
     line('Height / Weight', [app.height, app.weight].filter(Boolean).join(' / ') || null)
-
-    heading('Employment')
-    line('Job Title', app.jobTitle)
-    line('Hours Per Week', app.hrsPerWeek)
-    line('Hire Date', app.hireDate ? new Date(app.hireDate).toLocaleDateString('en-US') : null)
-    line('Location', app.location)
-    line('Division', app.isDivision ? `Yes${app.parentCompany ? ` — parent: ${app.parentCompany}` : ''}` : 'No')
 
     if (app.spouseFirstName || app.spouseLastName) {
       heading('Spouse')
@@ -158,6 +147,24 @@ export default defineEventHandler(async (event) => {
       app.waiveOneTimeFee === true ? 'Waived' : `$${ONE_TIME_ENROLLMENT_FEE.toFixed(2)} (added to first payment)`,
     )
 
+    // Payment happens before signing, so the record exists when this prints
+    const latestPayment = await prisma.payment.findFirst({
+      where: { applicationId: app.id, status: { in: ['succeeded', 'authorized'] } },
+      orderBy: { createdAt: 'desc' },
+    })
+    heading('Payment')
+    if (latestPayment) {
+      line('Status', latestPayment.status === 'succeeded' ? 'Paid' : 'Authorized — pending processing')
+      line('Amount', `$${latestPayment.amount.toFixed(2)}`)
+      line('Method', latestPayment.method === 'ach' ? 'Bank account (ACH)' : 'Credit card')
+      line('Date', new Date(latestPayment.createdAt).toLocaleString('en-US'))
+      if (latestPayment.transactionId) line('Transaction #', latestPayment.transactionId)
+      line('Invoice', latestPayment.invoice)
+    } else {
+      line('Status', 'Not yet paid')
+    }
+
+
     // Underwriting Q&A: answers are stored as { productKey: { questionId: { answer, details } } }
     const answers = (app.underwritingAnswers as any) || {}
     heading('Underwriting Questions')
@@ -181,6 +188,22 @@ export default defineEventHandler(async (event) => {
     }
     if (!printedAny) {
       line('Underwriting', 'No responses recorded')
+    }
+
+    // Manual processing: merge in the payment-authorization pages, which
+    // carry the card/bank details the office needs to run the charge.
+    // They go before the signature page so signing still stamps the last page.
+    if (latestPayment?.pdfUrl) {
+      try {
+        const authKey = latestPayment.pdfUrl.split('.amazonaws.com/')[1]
+        const authObj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: authKey }))
+        const authBytes = Buffer.from(await authObj.Body!.transformToByteArray())
+        const authDoc = await PDFDocument.load(authBytes)
+        const authPages = await pdfDoc.copyPages(authDoc, authDoc.getPageIndices())
+        for (const p of authPages) pdfDoc.addPage(p)
+      } catch (err) {
+        console.error('Failed to merge payment authorization pages:', err)
+      }
     }
 
     // Dedicated signature page at fixed coordinates — the sign-complete

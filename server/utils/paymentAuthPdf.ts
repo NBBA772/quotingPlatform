@@ -107,12 +107,8 @@ export async function buildPaymentAuthPdf(input: PaymentAuthPdfInput): Promise<U
 
   heading('Enrollee')
   line('NPN', app.groupNumber)
-  line('Name of Enrollee', app.groupName)
+  line('Agent Name', app.groupName)
   line('Coverage', app.coverageTier ? tierLabels[app.coverageTier] || app.coverageTier : null)
-  if (app.reasons) {
-    line('Reason for Enrollment', String(app.reasons).split(',').filter(Boolean).join(', '))
-  }
-
   heading('Applicant')
   line('Name', [app.firstName, app.middleName, app.lastName].filter(Boolean).join(' '))
   line('Email', app.email || app.user?.email)
@@ -121,13 +117,6 @@ export async function buildPaymentAuthPdf(input: PaymentAuthPdfInput): Promise<U
   line('Date of Birth', fmtDate(app.dateOfBirth))
   line('Gender', app.gender)
   line('Height / Weight', [app.height, app.weight].filter(Boolean).join(' / ') || null)
-
-  heading('Employment')
-  line('Job Title', app.jobTitle)
-  line('Hours Per Week', app.hrsPerWeek)
-  line('Hire Date', fmtDate(app.hireDate))
-  line('Location', app.location)
-  line('Division', app.isDivision ? `Yes${app.parentCompany ? ` — parent: ${app.parentCompany}` : ''}` : 'No')
 
   if (app.spouseFirstName || app.spouseLastName) {
     heading('Spouse')

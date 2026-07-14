@@ -58,10 +58,7 @@
                 </div> -->
 
                 <div v-else-if="tab === 'insuranceAgents'">
-                  <InsuranceAgentDetails />
-                </div>
-
-                 <div v-else-if="tab === 'insuranceAgents'">
+                  <AddInsuranceAgent />
                   <InsuranceAgentDetails />
                 </div>
 

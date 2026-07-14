@@ -92,7 +92,8 @@ const fetchUser = async () => {
     const res = await $fetch("/api/user", {
       headers: { Authorization: `Bearer ${authToken}` },
     });
-    isAppAdmin.value = !!res?.appAdminId;
+    const u = (res as any)?.user || res;
+    isAppAdmin.value = !!u?.appAdminId;
   } catch (err) {
     console.error("Error fetching user:", err);
   }

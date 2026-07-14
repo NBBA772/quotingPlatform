@@ -2,8 +2,17 @@
   <div class="border rounded-xl p-5 dark:border-gray-600">
     <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">Payment</h3>
 
+    <!-- Waiting on the agent's plan selection -->
+    <div v-if="payment?.needsPlan" class="text-center py-6">
+      <div class="text-blue-600 dark:text-green-400 text-4xl mb-2">🕓</div>
+      <p class="text-gray-800 dark:text-white font-semibold">Plan selection in progress</p>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        Your agent will complete your plan selection — payment will be available once that step is done.
+      </p>
+    </div>
+
     <!-- Paid / recorded -->
-    <div v-if="paid || payment?.alreadyPaid" class="text-center py-4">
+    <div v-else-if="paid || payment?.alreadyPaid" class="text-center py-4">
       <div class="text-green-600 dark:text-green-400 text-4xl mb-2">✓</div>
       <template v-if="manualRecorded || (payment?.alreadyPaid && payment?.manualMode)">
         <p class="text-gray-800 dark:text-white font-semibold">Payment details recorded</p>
@@ -169,6 +178,7 @@ const props = defineProps<{ applicationId: number }>()
 const emit = defineEmits<{ (e: 'paid', transactionId: number | null): void }>()
 
 const payment = ref<{
+  needsPlan?: boolean
   amount: number
   breakdown: { label: string; amount: number; oneTime?: boolean }[]
   creditCardPayerFee: number | null

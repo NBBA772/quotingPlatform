@@ -23,5 +23,5 @@
 
 <script setup lang="ts">
 defineProps<{ current: number }>()
-const labels = ['Applicant', 'Underwriting', 'Plan', 'Dental / Vision / Ancillary', 'Sign']
+const labels = ['Applicant', 'Underwriting', 'Plan', 'Dental / Vision / Ancillary', 'Payment & Sign']
 </script>

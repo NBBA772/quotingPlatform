@@ -18,9 +18,6 @@ export default defineEventHandler(async (event) => {
     const app = await getApplicationOrThrow(applicationId)
     await assertCanManageApplication(user, app.userId)
 
-    if (!app.signedAt) {
-      throw createError({ statusCode: 400, statusMessage: 'Application must be signed before payment' })
-    }
     const manualMode = process.env.EPAYPOLICY_MANUAL_MODE === 'true' || !epayConfigured()
 
     const breakdown: { label: string; amount: number; oneTime?: boolean }[] = []
@@ -45,8 +42,10 @@ export default defineEventHandler(async (event) => {
     }
 
     const amount = Number(breakdown.reduce((sum, item) => sum + item.amount, 0).toFixed(2))
-    if (amount <= 0) {
-      throw createError({ statusCode: 400, statusMessage: 'No priced coverage on this application' })
+
+    // Payment stays locked until the agent completes plan selection
+    if (app.healthPlanPrice == null || amount <= 0) {
+      return { needsPlan: true }
     }
 
     // Quote payer fees for both methods so the client sees full charges up

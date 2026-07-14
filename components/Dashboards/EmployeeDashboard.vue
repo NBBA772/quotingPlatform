@@ -31,7 +31,6 @@
               <!-- Tab Content -->
               <Transition name="fade-slide" mode="out-in">
                 <div :key="tab">
-                  <InsuranceCardDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='insuranceCard'" />
                   <!-- <PlanBenefitDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='planBenefits'" />
                   <ProviderNetworkDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='providerNetwork'" />
                   <ClaimsSupportDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='claimsSupport'" />
@@ -63,7 +62,6 @@ import ProviderNetwork from '~/components/AppAdmin/ProviderNetwork.vue'
 const loggedInUser = ref(null)
 const editing = ref(false)
 const tabs = [
-  { key: 'insuranceCard', label: 'Insurance Card' },
   // { key: 'planBenefits', label: 'Plan Benefits' },
   // { key: 'providerNetwork', label: 'Provider Network' },
   // { key: 'claimsSupport', label: 'Claims Support' },
@@ -71,7 +69,7 @@ const tabs = [
   { key: 'application', label: 'Application' }
 ]
 
-const tab = ref('insuranceCard')
+const tab = ref('application')
 const tabRefs = ref<HTMLLIElement[]>([])
 const underlineX = ref(0)
 const underlineWidth = ref(0)

@@ -56,13 +56,10 @@
                     <li class="flex justify-between"><span class="text-gray-700 dark:text-gray-300">Location:</span> <span class="text-gray-800 dark:text-gray-200">{{ loggedInUser?.location || 'N/A' }}</span></li>
                   </ul>
 
-                  <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2 mt-6">Company Info</h2>
+                  <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2 mt-6">Enrollment Info</h2>
                   <ul class="space-y-2">
-                    <li class="flex justify-between"><span class="text-gray-700 dark:text-gray-300">Company Name:</span> <span class="text-gray-800 dark:text-gray-200">{{ loggedInUser?.companyName || 'N/A' }}</span></li>
-                    <li class="flex justify-between"><span class="text-gray-700 dark:text-gray-300">EIN:</span> <span class="text-gray-800 dark:text-gray-200">{{ loggedInUser?.ein || 'N/A' }}</span></li>
-                    <li class="flex justify-between"><span class="text-gray-700 dark:text-gray-300">Industry:</span> <span class="text-gray-800 dark:text-gray-200">{{ loggedInUser?.industry || 'N/A' }}</span></li>
-                    <li class="flex justify-between"><span class="text-gray-700 dark:text-gray-300">Employee Size:</span> <span class="text-gray-800 dark:text-gray-200">{{ loggedInUser?.employeeSize || 'N/A' }}</span></li>
-                    <li class="flex justify-between"><span class="text-gray-700 dark:text-gray-300">Business Code:</span> <span class="text-gray-800 dark:text-gray-200">{{ company?.businessCode || loggedInUser?.businessCode || 'N/A' }}</span></li>
+                    <li class="flex justify-between"><span class="text-gray-700 dark:text-gray-300">Enrollee:</span> <span class="text-gray-800 dark:text-gray-200">{{ loggedInUser?.companyName || 'N/A' }}</span></li>
+                    <li class="flex justify-between"><span class="text-gray-700 dark:text-gray-300">Enrollee Code:</span> <span class="text-gray-800 dark:text-gray-200">{{ company?.businessCode || loggedInUser?.businessCode || 'N/A' }}</span></li>
                   </ul>
 
                   <div class="mt-6">
@@ -103,10 +100,6 @@
               <!-- Animated Tab Content -->
               <Transition name="fade-slide" mode="out-in">
                 <div :key="tab">
-                  <!-- Employees Tab -->
-                  <div v-if="tab === 'employees'">
-                    <CompanyEmployees :businessCode="company?.businessCode || loggedInUser?.businessCode" />
-                  </div>
 
                     <!-- Request SEO Tab -->
 <!--                      
@@ -176,13 +169,16 @@
                   </div> -->
 
                   <!-- Application Tab -->
-                  <div v-else-if="tab === 'application'">
+                  <div v-if="tab === 'application'">
                     <Application />
                   </div>
 
                   <!-- Payment Tab -->
-                  <div v-else-if="tab === 'payment'">
-                    <PaymentAuthorizationForm />
+                  <div v-else-if="tab === 'payment'" class="p-4 my-4 shadow rounded-lg bg-white dark:bg-[#3a4934]">
+                    <EnrollPaymentForm v-if="myApplication?.id" :application-id="myApplication.id" />
+                    <p v-else class="text-gray-500 dark:text-gray-300">
+                      Save your application first — payment opens once it's on file.
+                    </p>
                   </div>
                 </div>
               </Transition>
@@ -201,8 +197,9 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useAuthCookie } from '~/composables/useAuth'
 
 const loggedInUser = ref<any>(null)
+const myApplication = ref<any>(null)
 const editing = ref(false)
-const tab = ref('employees')
+const tab = ref('application')
 const company = ref<any>(null)
 const authCookie = useAuthCookie()
 const tabSwitch = ref(false)
@@ -213,11 +210,10 @@ const underlineX = ref(0)
 const underlineWidth = ref(0)
 
 const tabs = [
-  { key: 'employees', label: 'Employees' },
   // { key: 'requestSEO', label: 'Request SEO' },
   // { key: 'requestWebDevelopment', label: 'Request Web Development' },
   // { key: 'payroll', label: 'Payroll' },
-  { key: 'application', label: 'Applications' },
+  { key: 'application', label: 'Application' },
   { key: 'payment', label: 'Payment' },
 ]
 
@@ -263,7 +259,18 @@ function cancelEdit() { editing.value = false }
 function setTab(tabName: string) {
   tab.value = tabName
   if (tabName === 'requestSEO' || tabName === 'requestWebDevelopment') tabSwitch.value = false
+  // Pick up an application saved moments ago in the Application tab
+  if (tabName === 'payment') loadMyApplication()
   nextTick(updateUnderline)
+}
+
+async function loadMyApplication() {
+  try {
+    const apps: any = await $fetch('/api/applications/my')
+    myApplication.value = Array.isArray(apps) && apps.length ? apps[0] : null
+  } catch (err) {
+    console.error('Failed to load application for payment tab:', err)
+  }
 }
 
 function updateUnderline() {
@@ -280,6 +287,7 @@ onMounted(async () => {
   if (loggedInUser.value?.companyId) {
     await fetchCompanyInfo(loggedInUser.value.companyId)
   }
+  await loadMyApplication()
   nextTick(updateUnderline)
 })
 </script>

@@ -2,6 +2,22 @@
   <div class="mx-auto p-6 bg-white dark:bg-[#3a4934] rounded-xl shadow-md space-y-6">
     <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Application</h2>
 
+    <!-- Saved state -->
+    <div v-if="saved" class="text-center py-8 space-y-4">
+      <div class="text-green-600 dark:text-green-400 text-5xl">✓</div>
+      <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Application Saved</h3>
+      <p class="text-gray-600 dark:text-gray-300">
+        Your application has been saved.
+      </p>
+      <NuxtLink
+        :to="`/enroll/${props.userId}/applicant`"
+        class="inline-block px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-[#046937] dark:hover:bg-[#058a45]"
+      >
+        Continue: Review Your Selection
+      </NuxtLink>
+    </div>
+
+    <template v-else>
     <!-- Step Progress -->
     <div class="flex items-center space-x-2">
       <div v-for="(s, i) in steps" :key="i"
@@ -32,9 +48,8 @@
                       class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
               </div>
               <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Name of Enrollee</label>
+                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Agent Name</label>
                 <input type="text"
-                      :disabled="!isAgent"
                       v-model="form.groupName"
                       class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white"
                       required />
@@ -53,51 +68,7 @@
             </div>
           
 
-              <!-- Reason for Enrollment -->
-              <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">
-                  Reason for Enrollment (Mark all that apply)
-                </label>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <label class="flex items-center">
-                    <input type="checkbox" value="Open Enrollment" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Open Enrollment</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="checkbox" value="New Application" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">New Application</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="checkbox" value="Newborn" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Newborn</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="checkbox" value="Court Order" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Court Order</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="checkbox" value="Dependent Addition" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Dependent Addition</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="checkbox" value="Loss of Coverage" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Loss of Coverage</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="checkbox" value="Marriage" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Marriage</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="checkbox" value="Divorce" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Divorce</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="checkbox" value="Military Leave" v-model="form.reasons" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Military Leave</span>
-                  </label>
-                </div>
-              </div>
-            </div>
+                        </div>
       </Transition>
 
       <!-- Step 2. Personal Info -->
@@ -222,74 +193,6 @@
                         required />
                 </div>
               </div>
-          </div>
-      </Transition>
-
-      <!-- Step 4. Company -->
-      <Transition name="fade-slide" mode="out-in">
-          <div v-if="stepName === 'company'" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <!-- Hire Date -->
-              <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Hire Date</label>
-                <input type="date" v-model="form.hireDate"
-                      class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white"
-                      required />
-              </div>
-
-              <!-- Rehire Date -->
-              <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Rehire Date</label>
-                <input type="date" v-model="form.rehireDate"
-                      class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white"
-                      />
-              </div>
-
-              <!-- Location -->
-              <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Location</label>
-                <input type="text" v-model="form.location"
-                      class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white"
-                      />
-              </div>
-
-              <!-- Is Division -->
-              <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Is this a division?</label>
-                <div class="flex items-center space-x-6">
-                  <label class="flex items-center">
-                    <input type="radio" :value="true" v-model="form.isDivision" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">Yes</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="radio" :value="false" v-model="form.isDivision" class="mr-2">
-                    <span class="text-gray-700 dark:text-gray-300">No</span>
-                  </label>
-                </div>
-              </div>
-
-
-              <!-- Parent Company -->
-              <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Parent Company</label>
-                <input type="text" v-model="form.parentCompany" class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white" />
-              </div>
-
-              <!-- Work Info -->
-              <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Hours Per Week</label>
-                <input type="text" v-model="form.hrsPerWeek"
-                      class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white"
-                      />
-              </div>
-
-              <div>
-                <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Job Title</label>
-                <input type="text" v-model="form.jobTitle"
-                      class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white"
-                      />
-              </div>
-            </div>
           </div>
       </Transition>
 
@@ -439,10 +342,10 @@
       
     </form>
 
-
     <!-- Feedback Messages -->
     <p v-if="message" class="mt-4 text-green-600 dark:text-green-400">{{ message }}</p>
     <p v-if="error" class="mt-4 text-red-600 dark:text-red-400">{{ error }}</p>
+    </template>
 
     <!-- Weight qualification popup -->
     <Teleport to="body">
@@ -477,7 +380,7 @@ const props = defineProps<{ userId: number, application?: any }>()
 // Demographics only — plans, coverage, and underwriting are completed by the
 // agent in the /enroll flow. Dependents is intentionally the last step.
 // Spouse/dependents steps appear only when the selected coverage includes them.
-const allSteps = ['Group', 'Personal', 'Address', 'company', 'Spouse', 'dependents']
+const allSteps = ['Group', 'Personal', 'Address', 'Spouse', 'dependents']
 const currentStep = ref(0)
 
 const form = reactive({
@@ -539,6 +442,7 @@ const form = reactive({
 
 const message = ref('')
 const error = ref('')
+const saved = ref(false)
 
 const showSpouse = computed(() => ['individual_spouse', 'family'].includes(form.coverageTier))
 const showDependents = computed(() => ['individual_child', 'family'].includes(form.coverageTier))
@@ -601,7 +505,8 @@ const submitForm = async () => {
       body: payload,
     })
 
-    message.value = 'Application saved! Your agent will complete the plan and coverage sections.'
+    message.value = ''
+    saved.value = true
   } catch (err: any) {
     console.error(err)
     error.value = err?.message || 'Failed to submit application'
@@ -745,6 +650,8 @@ watch(
   (newApp) => {
     if (newApp) {
       populateForm(newApp)
+      // An existing application opens in the saved state with an Edit button
+      if (newApp.id) saved.value = true
     }
   },
   { immediate: true } // so it runs once on mount
@@ -763,6 +670,8 @@ async function fetchAndPopulateApplication(userId: number) {
     const app = res.application
     console.log('[DEBUG] Fetched application:', app)
     populateForm(app)
+    // An existing application opens in the saved state with an Edit button
+    if (app.id) saved.value = true
   } catch (error) {
     console.error('[ERROR] Fetching application failed:', error)
   }

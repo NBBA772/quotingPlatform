@@ -31,9 +31,6 @@ export default defineEventHandler(async (event) => {
     const app = await getApplicationOrThrow(applicationId)
     await assertCanManageApplication(user, app.userId)
 
-    if (!app.signedAt) {
-      throw createError({ statusCode: 400, statusMessage: 'Application must be signed before payment' })
-    }
     // Block double-charges within a billing period, but allow the next
     // month's premium to be collected on an already-paid application.
     const recentPayment = await prisma.payment.findFirst({
@@ -109,8 +106,8 @@ export default defineEventHandler(async (event) => {
     if (chargeEnrollmentFee) amount += ONE_TIME_ENROLLMENT_FEE
 
     amount = Number(amount.toFixed(2))
-    if (amount <= 0) {
-      throw createError({ statusCode: 400, statusMessage: 'No priced coverage on this application' })
+    if (app.healthPlanPrice == null || amount <= 0) {
+      throw createError({ statusCode: 400, statusMessage: 'Your agent must complete plan selection before payment' })
     }
 
     const payer = [app.firstName, app.lastName].filter(Boolean).join(' ') || 'Applicant'

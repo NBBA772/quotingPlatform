@@ -108,6 +108,15 @@ export default defineEventHandler(async (event) => {
 
     const normalizeDate = (val: any) => (!val || val === '' ? null : new Date(val))
     const normalizeReasons = (val: any) => (!val ? null : Array.isArray(val) ? val.join(',') : val)
+    const normalizePrice = (val: any) => {
+      const parsed = parseFloat(val)
+      return isNaN(parsed) ? null : parsed
+    }
+
+    // Drop blank ancillary rows (the form always sends one empty placeholder)
+    const cleanAncillaryPlans = Array.isArray(ancillaryPlans)
+      ? ancillaryPlans.filter((p: any) => p?.planName || p?.product || p?.price != null)
+      : ancillaryPlans
 
     // Find existing application
     let application = await prisma.insuranceApplication.findFirst({ where: { userId } })
@@ -177,13 +186,15 @@ export default defineEventHandler(async (event) => {
                 })),
               }
             : undefined,
-          ancillaryPlans: ancillaryPlans.length
+          // An explicit array (even empty after cleaning) replaces ancillary
+          // plans; missing/invalid field leaves them untouched
+          ancillaryPlans: Array.isArray(cleanAncillaryPlans)
             ? {
                 deleteMany: {},
-                create: ancillaryPlans.map((plan: any) => ({
+                create: cleanAncillaryPlans.map((plan: any) => ({
                   planName: plan.planName,
                   product: plan.product,
-                  price: parseFloat(plan.price),
+                  price: normalizePrice(plan.price),
                 })),
               }
             : undefined,
@@ -249,12 +260,12 @@ export default defineEventHandler(async (event) => {
                 })),
               }
             : undefined,
-          ancillaryPlans: ancillaryPlans.length
+          ancillaryPlans: Array.isArray(cleanAncillaryPlans) && cleanAncillaryPlans.length
             ? {
-                create: ancillaryPlans.map((plan: any) => ({
+                create: cleanAncillaryPlans.map((plan: any) => ({
                   planName: plan.planName,
                   product: plan.product,
-                  price: parseFloat(plan.price),
+                  price: normalizePrice(plan.price),
                 })),
               }
             : undefined,
