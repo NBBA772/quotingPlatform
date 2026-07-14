@@ -48,6 +48,19 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, statusMessage: 'An enrollee with this email already exists' })
     }
 
+    // Never enroll an agent's own login as an enrollee — that entangles the
+    // two roles on one account
+    const existingUserForEmail = await prisma.user.findUnique({
+      where: { email: body.contactEmail },
+      include: { insuranceAgent: { select: { id: true } } },
+    })
+    if (existingUserForEmail?.insuranceAgent) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'This email belongs to an agent account — use the enrollee\'s own email',
+      })
+    }
+
     const businessCode = await generateUniqueBusinessCode()
     const enrolleeName = `${String(body.contactFirstName).trim()} ${String(body.contactLastName).trim()}`.trim()
 

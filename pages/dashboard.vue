@@ -20,8 +20,10 @@
 
         <AppAdminDashboard v-if="isAppAdmin" />
         <CompanyAdminDashboard v-else-if="isCompanyAdmin" />
-        <EmployeeDashboard v-else-if="isEmployee" />
+        <!-- Agent outranks employee: an agent accidentally enrolled as an
+             enrollee must still get the agent dashboard -->
         <InsuranceAgentDashboard v-else-if="isInsuranceAgent" />
+        <EmployeeDashboard v-else-if="isEmployee" />
       </template>
     </div>
   </PatternSection>
