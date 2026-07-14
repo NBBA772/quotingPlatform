@@ -87,7 +87,6 @@
             6-Digit Code
           </button>
           <button
-            v-if="isOwner"
             type="button"
             class="px-4 py-2 rounded-lg font-medium"
             :class="method === 'signature' ? 'bg-blue-600 text-white dark:bg-[#046937]' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
@@ -193,10 +192,6 @@ const signed = ref(false)
 const downloadUrl = ref('')
 const paymentDone = ref(false)
 
-// Only the enrollee themselves may draw a signature; an agent working the
-// application on their behalf must use the 6-digit code
-const isOwner = ref(false)
-
 const method = ref<'signature' | 'code'>('code')
 const consent = ref(false)
 const sigPad = ref<any>(null)
@@ -207,11 +202,6 @@ const code = ref('')
 
 onMounted(async () => {
   try {
-    const me: any = await $fetch('/api/user', {
-      headers: useEnrollmentAuthHeaders(),
-    }).catch(() => null)
-    isOwner.value = (me?.user?.id ?? me?.id) === userId
-
     const { application: app } = await fetchEnrollmentApplication(userId)
     application.value = app
     if (!app) {

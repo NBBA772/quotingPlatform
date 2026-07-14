@@ -81,14 +81,6 @@ export default defineEventHandler(async (event) => {
         data: { usedAt: new Date() },
       })
     } else if (method === 'signature') {
-      // Only the enrollee may draw their own signature — an agent signing
-      // with the client on the phone must use the 6-digit code
-      if (user.id !== app.userId) {
-        throw createError({
-          statusCode: 403,
-          statusMessage: 'Only the enrollee can draw a signature — use the 6-digit code sent to them',
-        })
-      }
       if (!body.signatureDataUrl?.startsWith('data:image/png')) {
         throw createError({ statusCode: 400, statusMessage: 'Signature image is required' })
       }
