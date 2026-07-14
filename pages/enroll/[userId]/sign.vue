@@ -126,7 +126,7 @@
           <p v-if="codeSentTo" class="text-sm text-green-600 dark:text-green-400">
             Code sent to {{ codeSentTo }} — it expires in {{ codeExpiry }} minutes.
           </p>
-          <div v-if="codeSentTo">
+          <div>
             <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Enter the 6-digit code</label>
             <input
               v-model="code"
