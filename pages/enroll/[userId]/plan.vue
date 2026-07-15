@@ -13,7 +13,7 @@
         </NuxtLink>
       </p>
 <!---Note-->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
           v-for="plan in healthPlans"
           :key="plan.value"
@@ -262,6 +262,24 @@ const healthPlans: HealthPlan[] = [
         prices: { single: 504.12, individual_spouse: 1021.74, individual_child: 769.47, family: 1299.46 },
       },
     ],
+  },
+  {
+    value: 'plan5',
+    label: 'Plan 5 — UHC',
+    pdfUrl: '/pdfs/uhc.pdf',
+    summary: 'UnitedHealthcare plan with fixed copays for everyday care and 30% coinsurance on major services.',
+    benefits: [
+      'Deductible $3,500 / $7,000 · Coinsurance 30%',
+      'PCP copay $40 · Specialist $60',
+      'Prescriptions from $0 generic copay',
+      'Full benefit details in the linked PDF',
+    ],
+    prices: {
+      single: 749,
+      individual_spouse: 1499,
+      individual_child: 1449,
+      family: 2195,
+    },
   },
 ]
 

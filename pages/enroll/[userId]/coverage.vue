@@ -10,7 +10,19 @@
       <div class="border rounded-xl p-5 mb-6 dark:border-gray-600">
         <div class="flex items-center justify-between">
           <div>
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Dental & Vision Coverage</h3>
+            <h3 class="flex items-center text-lg font-semibold text-gray-800 dark:text-white">
+              Dental & Vision Coverage
+              <a
+                href="/pdfs/dental-and-vision.pdf"
+                target="_blank"
+                title="View Dental & Vision brochure"
+                class="text-gray-400 hover:text-blue-600 dark:hover:text-green-400 ml-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+              </a>
+            </h3>
             <p class="text-sm text-gray-500 dark:text-gray-300">Add dental and vision to this application.</p>
           </div>
           <div class="flex items-center space-x-4">
@@ -53,7 +65,20 @@
           class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-end"
         >
           <div>
-            <label class="block text-gray-700 dark:text-gray-300 font-medium mb-1">Product</label>
+            <label class="flex items-center text-gray-700 dark:text-gray-300 font-medium mb-1">
+              Product
+              <a
+                v-if="ancillaryBrochures[plan.product]"
+                :href="ancillaryBrochures[plan.product]"
+                target="_blank"
+                :title="`View ${plan.product} brochure`"
+                class="text-gray-400 hover:text-blue-600 dark:hover:text-green-400 ml-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+              </a>
+            </label>
             <select
               v-model="plan.product"
               class="w-full px-3 py-2 border rounded-md dark:bg-[#142610] dark:text-white"
@@ -164,6 +189,15 @@ const ancillaryAgeRates: Record<string, { rates: AgeRate[]; whose: 'applicant' |
       { min: 60, max: 64, price: 211.14 },
     ],
   },
+}
+
+// Product brochures — the icon appears next to the Product label once a
+// product with a brochure is selected
+const ancillaryBrochures: Record<string, string> = {
+  Accident: '/pdfs/accident.pdf',
+  'Critical Illness': '/pdfs/critical-illness.pdf',
+  'Life — Individual': '/pdfs/life.pdf',
+  'Life — Spouse': '/pdfs/life.pdf',
 }
 
 // Monthly rates that depend on the coverage tier chosen on the Applicant step
