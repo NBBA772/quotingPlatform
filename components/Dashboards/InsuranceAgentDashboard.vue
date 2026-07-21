@@ -28,39 +28,61 @@
                 </ul>
               </div> -->
 
-              <!-- Metrics -->
-              <AgentMetrics />
-
-              <!-- Which enrollment type the agent wants to work with -->
-              <div class="mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">What are you working on?</h3>
-                <EnrollmentModeSelector
-                  v-model="selectedMode"
-                  :can-individual="permissions.canIndividual"
-                  :can-group="permissions.canGroup"
-                  :can-custom="permissions.canCustom"
-                />
+              <!-- Book / Team toggle — only for agents who are also an upline -->
+              <div v-if="isUpline" class="flex gap-2 mb-6">
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-lg text-sm font-medium"
+                  :class="view === 'book' ? 'bg-blue-600 text-white dark:bg-[#046937]' : 'bg-gray-200 text-gray-700 dark:bg-[#142610] dark:text-gray-200'"
+                  @click="view = 'book'"
+                >My Book</button>
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-lg text-sm font-medium"
+                  :class="view === 'team' ? 'bg-blue-600 text-white dark:bg-[#046937]' : 'bg-gray-200 text-gray-700 dark:bg-[#142610] dark:text-gray-200'"
+                  @click="view = 'team'"
+                >My Team</button>
               </div>
 
-              <!-- Mode panel -->
-              <Transition name="fade-slide" mode="out-in">
-                <div :key="selectedMode || 'none'">
-                  <template v-if="selectedMode === 'individual'">
-                    <div class="flex justify-end mb-4">
-                      <NuxtLink
-                        to="/enrollee-intake"
-                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-[#046937] dark:hover:bg-[#058a45]"
-                      >
-                        + New Enrollee
-                      </NuxtLink>
-                    </div>
-                    <InsuranceAgentLeads />
-                  </template>
+              <!-- My Team (downline) view for upline agents -->
+              <AgentAdminTeam v-if="isUpline && view === 'team'" />
 
-                  <CompanyEnrolleeList v-else-if="selectedMode === 'group'" mode="group" />
-                  <CompanyEnrolleeList v-else-if="selectedMode === 'custom'" mode="custom" />
+              <!-- My Book view (default agent workspace) -->
+              <template v-if="view === 'book'">
+                <!-- Metrics -->
+                <AgentMetrics />
+
+                <!-- Which enrollment type the agent wants to work with -->
+                <div class="mb-6">
+                  <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">What are you working on?</h3>
+                  <EnrollmentModeSelector
+                    v-model="selectedMode"
+                    :can-individual="permissions.canIndividual"
+                    :can-group="permissions.canGroup"
+                    :can-custom="permissions.canCustom"
+                  />
                 </div>
-              </Transition>
+
+                <!-- Mode panel -->
+                <Transition name="fade-slide" mode="out-in">
+                  <div :key="selectedMode || 'none'">
+                    <template v-if="selectedMode === 'individual'">
+                      <div class="flex justify-end mb-4">
+                        <NuxtLink
+                          to="/enrollee-intake"
+                          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-[#046937] dark:hover:bg-[#058a45]"
+                        >
+                          + New Enrollee
+                        </NuxtLink>
+                      </div>
+                      <InsuranceAgentLeads />
+                    </template>
+
+                    <CompanyEnrolleeList v-else-if="selectedMode === 'group'" mode="group" />
+                    <CompanyEnrolleeList v-else-if="selectedMode === 'custom'" mode="custom" />
+                  </div>
+                </Transition>
+              </template>
 
               <ChangePassword />
             </section>
@@ -97,6 +119,10 @@ const underlineWidth = ref(0)
 // Enrollment mode the agent is currently working in, gated by their permissions.
 const selectedMode = ref<string | null>(null)
 const permissions = ref({ canIndividual: false, canGroup: false, canCustom: false })
+
+// If this agent is also an upline (agent manager), they get a My Book / My Team toggle.
+const isUpline = ref(false)
+const view = ref<'book' | 'team'>('book')
 
 async function fetchAgentPermissions() {
   try {
@@ -286,6 +312,10 @@ onMounted(async () => {
   loggedInUser.value = await getLoggedInUser()
 
   await fetchAgentPermissions()
+
+  if (loggedInUser.value?.id) {
+    isUpline.value = await useAgentAdmin(loggedInUser.value.id)
+  }
 
   if (loggedInUser.value?.companyId) {
     await fetchCompanyInfo(loggedInUser.value.companyId)

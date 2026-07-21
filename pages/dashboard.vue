@@ -19,6 +19,10 @@
 
 
         <AppAdminDashboard v-if="isAppAdmin" />
+        <!-- Pure manager (not a producing agent) gets the manager dashboard.
+             A producing agent who is also an upline gets the agent dashboard,
+             which shows a "My Team" toggle for their downline. -->
+        <AgentAdminDashboard v-else-if="isAgentAdmin && !isInsuranceAgent" />
         <CompanyAdminDashboard v-else-if="isCompanyAdmin" />
         <!-- Agent outranks employee: an agent accidentally enrolled as an
              enrollee must still get the agent dashboard -->
@@ -39,6 +43,7 @@ const loggedInUser = ref<any>(null);
 const authCookie = useAuthCookie();
 
 const isAppAdmin = ref(false);
+const isAgentAdmin = ref(false);
 const isCompanyAdmin = ref(false);
 
 const isEmployee = ref(false)
@@ -56,6 +61,7 @@ async function getLoggedInUser() {
     loggedInUser.value = response.user || response;
     if (loggedInUser.value?.id) {
       isAppAdmin.value = await useAppAdmin(loggedInUser.value.id)
+      isAgentAdmin.value = await useAgentAdmin(loggedInUser.value.id)
       isCompanyAdmin.value = await useCompanyAdmin(loggedInUser.value.id)
       isEmployee.value = await useEmployee(loggedInUser.value.id)
       isInsuranceAgent.value = await useInsuranceAgent(loggedInUser.value.id)

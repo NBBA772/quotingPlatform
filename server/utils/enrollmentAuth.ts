@@ -27,6 +27,19 @@ export async function requireAppAdmin(event: H3Event) {
   return user
 }
 
+// Requires the caller to be an agent manager (upline). Returns their AgentAdmin.
+export async function requireAgentAdmin(event: H3Event) {
+  const user = await requireAuthUser(event)
+  if (!user.agentAdminId) {
+    throw createError({ statusCode: 403, statusMessage: 'Agent manager only' })
+  }
+  const agentAdmin = await prisma.agentAdmin.findUnique({ where: { id: user.agentAdminId } })
+  if (!agentAdmin) {
+    throw createError({ statusCode: 403, statusMessage: 'Agent manager only' })
+  }
+  return agentAdmin
+}
+
 // Resolves the acting agent and enforces that they may work in a given
 // enrollment mode. AppAdmins bypass the mode check. Returns the agent record
 // (null for an AppAdmin acting without an agent profile).

@@ -35,9 +35,13 @@ model User {
   companyAdminId   Int?
 
   appAdmin         AppAdmin?            @relation(fields: [appAdminId], references: [id])
-  appAdminId       Int?    
+  appAdminId       Int?
 
-  leadInvites LeadInvite[] 
+  // Login link for an agent manager (upline) account, mirrors appAdmin
+  agentAdmin       AgentAdmin?          @relation(fields: [agentAdminId], references: [id])
+  agentAdminId     Int?
+
+  leadInvites LeadInvite[]
   leadNotes LeadNote[]
 
   companyId  Int?
@@ -87,6 +91,10 @@ model InsuranceAgent {
   // Overseen by AppAdmin
   appAdmin   AppAdmin? @relation(fields: [appAdminId], references: [id])
   appAdminId Int?
+
+  // Upline / manager over this agent
+  agentAdmin   AgentAdmin? @relation(fields: [agentAdminId], references: [id])
+  agentAdminId Int?
 
   isActive  Boolean  @default(true)
   isAvailable Boolean @default(false)
@@ -363,10 +371,31 @@ model AppAdmin {
 
   isActive  Boolean  @default(true)
 
-   deletedAt        DateTime?     
+   deletedAt        DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @default(now())
+}
+
+
+// An agent manager / upline. Oversees a downline of InsuranceAgents and their
+// books of business. Logs in via a linked User (User.agentAdminId), same as AppAdmin.
+model AgentAdmin {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  username  String   @unique
+  email     String   @unique
+  password  String
+
+  users     User[]             // login link(s)
+  agents    InsuranceAgent[]   // downline
+
+  isActive  Boolean  @default(true)
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }
 
 

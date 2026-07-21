@@ -64,6 +64,31 @@
                 Custom
               </label>
             </div>
+            <div class="flex items-center gap-2 text-xs mt-2">
+              <span class="text-gray-400">Upline:</span>
+              <select
+                v-model="agent.agentAdminId"
+                class="border rounded px-2 py-1 text-xs dark:bg-[#3a4934] dark:text-white dark:border-gray-600"
+                @change="updateUpline(agent)"
+              >
+                <option :value="null">— None —</option>
+                <option v-for="m in managers" :key="m.id" :value="m.id">
+                  {{ m.firstName }} {{ m.lastName }}
+                </option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2 text-xs mt-2">
+              <span
+                v-if="agent.isUpline"
+                class="text-green-600 dark:text-green-400 font-medium"
+              >★ Is an upline (manager)</span>
+              <button
+                v-else
+                type="button"
+                class="px-2 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                @click="makeUpline(agent)"
+              >Make Upline</button>
+            </div>
           </div>
 
           <!-- Right: Delete -->
@@ -88,6 +113,7 @@ import { useCookie } from "#imports";
 import draggable from "vuedraggable";
 
 const agents = ref<any[]>([]);
+const managers = ref<any[]>([]);
 const loading = ref(false);
 const isAppAdmin = ref(false);
 const removingIds = ref(new Set<number>());
@@ -157,6 +183,51 @@ const confirmRemove = async (agentId: number) => {
 };
 
 
+// --- Fetch agent managers (uplines) for the picker ---
+const fetchManagers = async () => {
+  if (!authToken) return;
+  try {
+    const res: any = await $fetch("/api/agent-admin/list", {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    managers.value = res.managers || [];
+  } catch (err) {
+    console.error("Error fetching agent managers:", err);
+  }
+};
+
+// --- Assign an agent's upline / manager ---
+const updateUpline = async (agent: any) => {
+  if (!authToken) return;
+  try {
+    await $fetch(`/api/insurance-agent/${agent.id}/upline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: { agentAdminId: agent.agentAdminId ?? null },
+    });
+  } catch (err) {
+    console.error("Error updating agent upline:", err);
+    alert("Failed to update upline");
+  }
+};
+
+// --- Promote an agent to also be an upline (manager) ---
+const makeUpline = async (agent: any) => {
+  if (!authToken) return;
+  if (!confirm(`Make ${agent.firstName} ${agent.lastName} an upline (manager)? They can then be assigned a downline.`)) return;
+  try {
+    await $fetch(`/api/insurance-agent/${agent.id}/make-upline`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    agent.isUpline = true;
+    await fetchManagers(); // they now appear in the upline picker
+  } catch (err: any) {
+    console.error("Error promoting agent to upline:", err);
+    alert(err?.data?.statusMessage || "Failed to make upline");
+  }
+};
+
 // --- Update which enrollment modes an agent may work in ---
 const updatePermissions = async (agent: any) => {
   if (!authToken) return;
@@ -196,7 +267,10 @@ const onReorder = async () => {
 
 onMounted(async () => {
   await fetchUser();
-  if (isAppAdmin.value) await fetchAgents();
+  if (isAppAdmin.value) {
+    await fetchAgents();
+    await fetchManagers();
+  }
 });
 </script>
 
