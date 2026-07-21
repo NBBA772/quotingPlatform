@@ -86,8 +86,9 @@ export default defineEventHandler(async (event) => {
         },
       });
 
-      // Send email
-      const signupLink = `https://www.businessbenefitalliance.com/register-admin`;
+      // Send email — AppAdmin registration lives at /register-agent
+      const base = process.env.BASE_URL || "https://www.businessbenefitalliance.com";
+      const signupLink = `${base}/register-agent?email=${encodeURIComponent(email)}`;
 
       const { error } = await resend.emails.send({
         from: "noreply@updates.businessbenefitalliance.com",
@@ -107,8 +108,9 @@ export default defineEventHandler(async (event) => {
     }
 
     return { success: true };
-  } catch (err) {
-    console.error("Error sending mass insurance agent invites:", err);
+  } catch (err: any) {
+    console.error("Error sending mass admin invites:", err);
+    if (err?.statusCode) throw err;
     throw createError({ statusCode: 500, statusMessage: "Failed to send invites" });
   }
 });

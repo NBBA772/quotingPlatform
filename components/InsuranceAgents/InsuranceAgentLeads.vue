@@ -120,7 +120,10 @@ const userId = ref<number | null>(null);
 // Fetch leads from accepted endpoint 
 const fetchLeads = async () => {
   try {
-    const res = await $fetch("/api/leads/accepted", { method: "GET" });
+    const res = await $fetch("/api/leads/accepted", {
+      method: "GET",
+      query: { enrollmentType: "individual" },
+    });
     
     // The employees array now includes the hasSigned property from the backend
     leads.value = res.assigned || [];

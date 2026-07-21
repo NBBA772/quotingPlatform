@@ -12,8 +12,57 @@
           (change)
         </NuxtLink>
       </p>
+
+      <!-- Custom company: only the admin-authored plans for this company -->
+      <template v-if="isCustom">
+        <p v-if="customPlans.length" class="text-sm text-gray-500 dark:text-gray-300 mb-4">
+          Custom plans for <b>{{ companyName }}</b>
+        </p>
+        <div v-if="customPlans.length === 0" class="border rounded-xl p-5 dark:border-gray-600 text-gray-500 dark:text-gray-300">
+          No custom plans have been set up for this company yet. Ask an app admin to add them.
+        </div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            v-for="plan in customPlans"
+            :key="plan.id"
+            role="button"
+            tabindex="0"
+            class="text-left border-2 rounded-xl p-5 transition cursor-pointer"
+            :class="selectedPlan === String(plan.id)
+              ? 'border-blue-600 dark:border-green-500 bg-blue-50 dark:bg-[#142610]'
+              : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'"
+            @click="selectCustomPlan(plan)"
+            @keydown.enter="selectCustomPlan(plan)"
+          >
+            <div class="flex items-center justify-between">
+              <span class="text-lg font-semibold text-gray-800 dark:text-white">{{ plan.name }}</span>
+              <a
+                v-if="plan.pdfUrl"
+                :href="plan.pdfUrl"
+                target="_blank"
+                class="text-gray-400 hover:text-blue-600 dark:hover:text-green-400 text-sm shrink-0 ml-2"
+                @click.stop
+              >PDF ↗</a>
+            </div>
+            <p v-if="customPriceFor(plan) != null" class="text-blue-600 dark:text-green-400 font-bold text-xl mt-1">
+              ${{ customPriceFor(plan)!.toFixed(2) }}/mo
+            </p>
+            <p v-if="plan.planType || plan.networkType" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {{ [plan.planType, plan.networkType].filter(Boolean).join(' · ') }}
+            </p>
+            <p v-if="plan.description" class="text-sm text-gray-500 dark:text-gray-300 mt-2">{{ plan.description }}</p>
+            <ul class="mt-3 space-y-1">
+              <li v-for="b in plan.benefits" :key="b.id" class="flex items-start text-sm text-gray-600 dark:text-gray-300">
+                <span class="text-green-600 dark:text-green-400 mr-2">✓</span>
+                <span>{{ b.text }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </template>
+
 <!---Note-->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
           v-for="plan in healthPlans"
           :key="plan.value"
@@ -299,6 +348,29 @@ const planPrice = ref<number | null>(null)
 const coverageTier = ref<Tier>('single')
 const waiveFee = ref(false)
 
+// Custom companies show only the admin-authored plans for that company.
+const isCustom = ref(false)
+const companyName = ref('')
+const customCompanyId = ref<number | null>(null)
+const customPlans = ref<any[]>([])
+const selectedCustomPlan = ref<any>(null)
+
+const customTierField: Record<Tier, string> = {
+  single: 'priceSingle',
+  individual_spouse: 'priceIndividualSpouse',
+  individual_child: 'priceIndividualChild',
+  family: 'priceFamily',
+}
+function customPriceFor(plan: any): number | null {
+  const v = plan[customTierField[coverageTier.value]]
+  return v == null ? (plan.priceSingle ?? null) : v
+}
+function selectCustomPlan(plan: any) {
+  selectedPlan.value = String(plan.id)
+  selectedCustomPlan.value = plan
+  planPrice.value = customPriceFor(plan)
+}
+
 const tierLabel = computed(() => tierLabels[coverageTier.value])
 
 // Applicant's age from the application: DOB preferred, typed age as fallback
@@ -343,17 +415,32 @@ function selectPlan(plan: HealthPlan) {
 
 onMounted(async () => {
   try {
-    const { application: app } = await fetchEnrollmentApplication(userId)
+    const { application: app, company } = await fetchEnrollmentApplication(userId)
     application.value = app
     if (app?.coverageTier && app.coverageTier in tierLabels) {
       coverageTier.value = app.coverageTier
     }
     applicantAge.value = computeAge(app)
-    if (app?.healthPlan) {
+    waiveFee.value = app?.waiveOneTimeFee === true
+
+    isCustom.value = company?.enrollmentType === 'custom'
+    companyName.value = company?.companyName ?? ''
+    customCompanyId.value = company?.id ?? null
+
+    if (isCustom.value && customCompanyId.value) {
+      // Custom company: list only that company's admin-authored plans.
+      const res: any = await $fetch(`/api/company/${customCompanyId.value}/custom-plans`, {
+        headers: useEnrollmentAuthHeaders(),
+      })
+      customPlans.value = res.plans || []
+      // Restore a prior custom selection.
+      const prior = app?.customPlanId ? customPlans.value.find((p) => p.id === app.customPlanId) : null
+      if (prior) selectCustomPlan(prior)
+      else if (app?.healthPlanPrice != null) planPrice.value = app.healthPlanPrice
+    } else if (app?.healthPlan) {
       selectedPlan.value = app.healthPlan
       planPrice.value = app.healthPlanPrice ?? planPrice.value
     }
-    waiveFee.value = app?.waiveOneTimeFee === true
   } catch (err: any) {
     error.value = err?.data?.statusMessage || err?.message || 'Failed to load application'
   } finally {
@@ -365,11 +452,20 @@ async function next() {
   error.value = ''
   saving.value = true
   try {
-    await saveEnrollmentStep(userId, application.value, {
-      healthPlan: selectedPlan.value,
-      healthPlanPrice: planPrice.value,
-      waiveOneTimeFee: waiveFee.value,
-    })
+    const patch = isCustom.value
+      ? {
+          customPlanId: selectedCustomPlan.value?.id ?? null,
+          healthPlan: selectedCustomPlan.value?.name ?? null,
+          healthPlanPrice: planPrice.value,
+          waiveOneTimeFee: waiveFee.value,
+        }
+      : {
+          customPlanId: null,
+          healthPlan: selectedPlan.value,
+          healthPlanPrice: planPrice.value,
+          waiveOneTimeFee: waiveFee.value,
+        }
+    await saveEnrollmentStep(userId, application.value, patch)
     await navigateTo(`/enroll/${userId}/coverage`)
   } catch (err: any) {
     error.value = err?.data?.statusMessage || err?.message || 'Failed to save plan selection'

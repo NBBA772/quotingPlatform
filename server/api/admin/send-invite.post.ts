@@ -66,14 +66,17 @@ export default defineEventHandler(async (event) => {
 
     const user = session.user
 
-    // Only allow App Admins to invite agents
+    // Only allow App Admins to invite admins
     if (!user.appAdminId) {
     throw createError({
         statusCode: 403,
-        statusMessage: "Only App Admins can invite insurance agents",
+        statusMessage: "Only App Admins can invite admins",
     })
     }
 
+    if (!body.email || !String(body.email).trim()) {
+      throw createError({ statusCode: 400, statusMessage: "Email is required" })
+    }
 
     // Save invite in DB
     await prisma.insuranceAgentInvite.create({
@@ -86,12 +89,14 @@ export default defineEventHandler(async (event) => {
     // Init Resend
     const resend = new Resend(process.env.RESEND_API_KEY)
 
-    const signupLink = `https://www.businessbenefitalliance.com/register-admin`
+    // AppAdmin registration lives at /register-agent (posts to /api/register-admin)
+    const base = process.env.BASE_URL || "https://www.businessbenefitalliance.com"
+    const signupLink = `${base}/register-agent?email=${encodeURIComponent(body.email)}`
 
     const { error } = await resend.emails.send({
       from: "noreply@updates.businessbenefitalliance.com",
       to: body.email,
-      subject: "You're Invited to Join as an Insurance Agent",
+      subject: "You're Invited to Join as an Admin",
       html: `
         <p>Hello,</p>
         <p>You’ve been invited to join our platform as an <b>admin</b>.</p>
@@ -107,7 +112,9 @@ export default defineEventHandler(async (event) => {
 
     return { success: true }
   } catch (err) {
-    console.error("Error sending insurance agent invite:", err)
+    console.error("Error sending admin invite:", err)
+    // Preserve known statuses (401/403/400) so the UI shows the real reason
+    if (err?.statusCode) throw err
     throw createError({ statusCode: 500, statusMessage: "Failed to send invite" })
   }
 })

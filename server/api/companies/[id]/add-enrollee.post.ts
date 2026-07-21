@@ -1,35 +1,35 @@
-import { readBody, createError, getRequestURL } from 'h3'
+import { readBody, getRouterParam, createError, getRequestURL } from 'h3'
 import { Resend } from 'resend'
 import bcrypt from 'bcryptjs'
 import prisma from '~/server/database/client'
-import { requireAuthUser, assertAgentCanEnroll } from '~/server/utils/enrollmentAuth'
+import { requireAuthUser, assertAgentCanEnroll, type EnrollmentMode } from '~/server/utils/enrollmentAuth'
 
-async function generateUniqueBusinessCode() {
-  let code: string
-  let exists = true
-  while (exists) {
-    code = Math.floor(100000 + Math.random() * 900000).toString()
-    const existing = await prisma.company.findUnique({ where: { businessCode: code } })
-    exists = !!existing
-  }
-  return code!
-}
-
-// Agent phone intake: creates the company and adds the client contact as its
-// first employee, so they immediately appear on the agent's dashboard and can
-// be taken into the insurance application.
+// Agent adds an enrollee (Employee + User) to an existing group/custom company
+// and seeds their application, so the agent can fill out the enrollment form
+// for them just like an individual/family enrollee. The group/custom analog of
+// /api/companies/intake.
 export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuthUser(event)
 
-    // Individual/family enrollees require the agent's "individual" permission.
-    const agent = await assertAgentCanEnroll(user, 'individual')
+    const companyId = Number(getRouterParam(event, 'id'))
+    if (isNaN(companyId)) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid company id' })
+    }
+
+    const company = await prisma.company.findUnique({ where: { id: companyId } })
+    if (!company) {
+      throw createError({ statusCode: 404, statusMessage: 'Company not found' })
+    }
+
+    // Permission is scoped to the company's enrollment mode.
+    const mode = (['individual', 'group', 'custom'].includes(company.enrollmentType)
+      ? company.enrollmentType
+      : 'group') as EnrollmentMode
+    const agent = await assertAgentCanEnroll(user, mode)
 
     const body = await readBody(event)
-    const required = [
-      'contactFirstName', 'contactLastName', 'contactEmail', 'contactPhone', 'contactPassword',
-      'streetAddress', 'city', 'state', 'zipCode',
-    ]
+    const required = ['contactFirstName', 'contactLastName', 'contactEmail', 'contactPhone', 'contactPassword']
     for (const field of required) {
       if (!body[field] || !String(body[field]).trim()) {
         throw createError({ statusCode: 400, statusMessage: `Missing required field: ${field}` })
@@ -39,15 +39,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Password must be at least 8 characters' })
     }
 
-    // The enrollee becomes an employee — reject up front if that email is
-    // already taken, instead of failing halfway through.
     const existingEmployee = await prisma.employee.findUnique({ where: { email: body.contactEmail } })
     if (existingEmployee) {
       throw createError({ statusCode: 409, statusMessage: 'An enrollee with this email already exists' })
     }
-
-    // Never enroll an agent's own login as an enrollee — that entangles the
-    // two roles on one account
     const existingUserForEmail = await prisma.user.findUnique({
       where: { email: body.contactEmail },
       include: { insuranceAgent: { select: { id: true } } },
@@ -59,38 +54,10 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const businessCode = await generateUniqueBusinessCode()
-    const enrolleeName = `${String(body.contactFirstName).trim()} ${String(body.contactLastName).trim()}`.trim()
-
-    // The data model hangs off Company, so each individual enrollee gets a
-    // household record derived from their own details.
-    const company = await prisma.company.create({
-      data: {
-        companyName: enrolleeName,
-        ein: null,
-        salesmanCode: body.npn || null,
-        industry: 'Individual',
-        enrollmentType: 'individual',
-        streetAddress: body.streetAddress,
-        city: body.city,
-        state: body.state,
-        zipCode: body.zipCode,
-        phoneNumber: body.contactPhone,
-        companyEmail: body.contactEmail,
-        website: null,
-        employeeSize: '1',
-        businessCode,
-        agentId: agent?.id ?? null,
-      },
-    })
-
-    // Create (or reuse) the User for the contact, then the Employee record.
-    // The User is what the enrollment flow (/enroll/[userId]) works off.
-    // The agent sets the password with the client on the phone.
     const hashedPassword = await bcrypt.hash(String(body.contactPassword), 10)
-    let employeeUser = await prisma.user.findUnique({ where: { email: body.contactEmail } })
-    const isNewUser = !employeeUser
 
+    let employeeUser = existingUserForEmail
+    const isNewUser = !employeeUser
     if (!employeeUser) {
       employeeUser = await prisma.user.create({
         data: {
@@ -105,7 +72,6 @@ export default defineEventHandler(async (event) => {
         },
       })
     } else {
-      // Existing account: attach to the company but keep their current password
       employeeUser = await prisma.user.update({
         where: { id: employeeUser.id },
         data: { companyId: company.id },
@@ -125,13 +91,9 @@ export default defineEventHandler(async (event) => {
       },
     })
 
-    // Seed the insurance application with the intake details so the
-    // enrollee's application opens prefilled: NPN, agent name, and their
-    // demographics. Best-effort — intake succeeds even if this fails.
+    // Seed a prefilled application so the enroll wizard opens ready to fill.
     try {
-      const existingApplication = await prisma.insuranceApplication.findFirst({
-        where: { userId: employeeUser.id },
-      })
+      const existingApplication = await prisma.insuranceApplication.findFirst({ where: { userId: employeeUser.id } })
       if (!existingApplication) {
         await prisma.insuranceApplication.create({
           data: {
@@ -142,20 +104,19 @@ export default defineEventHandler(async (event) => {
             lastName: body.contactLastName,
             email: body.contactEmail,
             phoneNumber: body.contactPhone,
-            streetAddress: body.streetAddress,
-            city: body.city,
-            state: body.state,
-            zipCode: body.zipCode,
+            streetAddress: body.streetAddress || company.streetAddress,
+            city: body.city || company.city,
+            state: body.state || company.state,
+            zipCode: body.zipCode || company.zipCode,
             isDivision: false,
           },
         })
       }
     } catch (err) {
-      console.error('Failed to seed application from intake:', err)
+      console.error('Failed to seed application for added enrollee:', err)
     }
 
-    // Welcome email — the password was set verbally on the call, so it is
-    // never included here. Best-effort: the records already exist either way.
+    // Welcome email — best-effort; password was set verbally on the call.
     let emailSent = false
     try {
       const origin = process.env.BASE_URL || getRequestURL(event).origin
@@ -167,7 +128,7 @@ export default defineEventHandler(async (event) => {
         html: `
           <p>Hello ${body.contactFirstName},</p>
           <p>${agent ? `${agent.firstName} ${agent.lastName}` : 'Your insurance agent'} has set up
-          your enrollment account.</p>
+          your enrollment account with <b>${company.companyName}</b>.</p>
           <p>You can log in at <a href="${origin}/login">${origin}/login</a> with your email
           (<b>${body.contactEmail}</b>) and the password ${isNewUser ? 'you set with your agent' : 'for your existing account'}.</p>
         `,
@@ -181,13 +142,12 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       companyId: company.id,
-      businessCode,
       employeeUserId: employeeUser.id,
-      employeeName: enrolleeName,
+      employeeName: `${String(body.contactFirstName).trim()} ${String(body.contactLastName).trim()}`.trim(),
       emailSent,
     }
   } catch (err: any) {
-    console.error('❌ Enrollee intake error:', err)
+    console.error('❌ Add enrollee error:', err)
     if (err?.code === 'P2002') {
       const fields = Array.isArray(err.meta?.target) ? err.meta.target.join(', ') : 'email, username, or phone'
       throw createError({ statusCode: 409, statusMessage: `An account with this ${fields} already exists` })

@@ -18,6 +18,34 @@ export async function requireAuthUser(event: H3Event) {
   return user
 }
 
+// Requires the caller to be a platform AppAdmin.
+export async function requireAppAdmin(event: H3Event) {
+  const user = await requireAuthUser(event)
+  if (!user.appAdminId) {
+    throw createError({ statusCode: 403, statusMessage: 'App admin only' })
+  }
+  return user
+}
+
+// Resolves the acting agent and enforces that they may work in a given
+// enrollment mode. AppAdmins bypass the mode check. Returns the agent record
+// (null for an AppAdmin acting without an agent profile).
+export type EnrollmentMode = 'individual' | 'group' | 'custom'
+
+export async function assertAgentCanEnroll(user: any, mode: EnrollmentMode) {
+  const agent = await prisma.insuranceAgent.findUnique({ where: { userId: user.id } })
+  if (!agent) {
+    if (user.appAdminId) return null
+    throw createError({ statusCode: 403, statusMessage: 'Only insurance agents can create enrollees' })
+  }
+  const permField = { individual: 'canIndividual', group: 'canGroup', custom: 'canCustom' }[mode] as
+    'canIndividual' | 'canGroup' | 'canCustom'
+  if (!agent[permField]) {
+    throw createError({ statusCode: 403, statusMessage: `You are not permitted to work with ${mode} enrollments` })
+  }
+  return agent
+}
+
 // Owner, app admin, company admin, or an insurance agent may work on an application.
 export async function assertCanManageApplication(user: any, applicationUserId: number) {
   if (user.id === applicationUserId || user.appAdminId || user.companyAdminId) return

@@ -37,6 +37,12 @@
                   <PlanDetailsDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='planDetails'" /> -->
 
                   <Application v-if="tab==='application'"/>
+
+                  <CustomPlanSelector
+                    v-else-if="tab==='selectPlan'"
+                    :company-id="loggedInUser?.companyId"
+                    :user-id="loggedInUser?.id"
+                  />
                 </div>
               </Transition>
             </section>
@@ -51,7 +57,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { userLogout, useAuthCookie } from '~/composables/useAuth'
 import { useAppAdmin } from '@/composables/useAppAdmin'
 import { useCompanyAdmin } from '@/composables/useCompanyAdmin'
@@ -61,13 +67,15 @@ import ProviderNetwork from '~/components/AppAdmin/ProviderNetwork.vue'
 // Data & State
 const loggedInUser = ref(null)
 const editing = ref(false)
-const tabs = [
-  // { key: 'planBenefits', label: 'Plan Benefits' },
-  // { key: 'providerNetwork', label: 'Provider Network' },
-  // { key: 'claimsSupport', label: 'Claims Support' },
-  // { key: 'planDetails', label: 'Plan Details' },
-  { key: 'application', label: 'Application' }
-]
+// Custom-company employees get a "Select Plan" tab to pick from the plans
+// an app admin authored for their company.
+const tabs = computed(() => {
+  const base = [{ key: 'application', label: 'Application' }]
+  if (company.value?.enrollmentType === 'custom') {
+    base.unshift({ key: 'selectPlan', label: 'Select Plan' })
+  }
+  return base
+})
 
 const tab = ref('application')
 const tabRefs = ref<HTMLLIElement[]>([])
@@ -222,7 +230,7 @@ function setTab(tabName: string) {
 
 function moveUnderline() {
   nextTick(() => {
-    const index = tabs.findIndex(t => t.key === tab.value)
+    const index = tabs.value.findIndex(t => t.key === tab.value)
     const el = tabRefs.value[index]
     if (el) {
       underlineX.value = el.offsetLeft - 30  // <-- shift left by 30px

@@ -20,6 +20,9 @@ export default defineEventHandler(async (event) => {
     }
 
     const bCode = user.company?.businessCode || null
+    const company = user.company
+      ? { id: user.company.id, enrollmentType: user.company.enrollmentType, companyName: user.company.companyName }
+      : null
         const application = await prisma.insuranceApplication.findFirst({
           where: {
             userId: userId,
@@ -34,10 +37,10 @@ export default defineEventHandler(async (event) => {
 
 
     if (!application) {
-      return null
+      return { application: null, bCode, company }
     }
 
-    return {application, bCode}
+    return {application, bCode, company}
 
   } catch (err) {
     console.error('[ERROR] Fetching application failed:', err)

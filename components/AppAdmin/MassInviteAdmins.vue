@@ -110,14 +110,14 @@ const sendInvites = async () => {
       const authToken = Cookies.get("auth_token");
       if (!authToken) throw new Error("No auth token found");
 
-      const response = await $fetch("/api/insurance-agent/send-mass-invite", {
+      const response = await $fetch("/api/admin/send-mass-invite", {
         method: "POST",
         headers: { Authorization: `Bearer ${authToken}` },
         body: { emails },
       });
 
       if (response.success) {
-        message.value = `Invites sent to ${emails.length} agents!`;
+        message.value = `Invites sent to ${emails.length} admins!`;
         emailsInput.value = "";
       } else {
         error.value = "Failed to send invites.";

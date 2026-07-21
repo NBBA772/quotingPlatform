@@ -146,7 +146,7 @@ const sendInvite = async () => {
       const authToken = Cookies.get("auth_token");
       if (!authToken) throw new Error("No auth token found");
 
-      const response = await $fetch("/api/insurance-agent/send-invite", {
+      const response = await $fetch("/api/admin/send-invite", {
         method: "POST",
         headers: { Authorization: `Bearer ${authToken}` },
         body: { email: email.value },

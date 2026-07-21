@@ -72,11 +72,16 @@
 
 
                 <div v-else-if="tab === 'adminOverview'">
+                  <AddAppAdmin />
                   <adminOverview />
                 </div>
 
                 <div v-else-if="tab === 'CompanyAgentAssignments'">
                   <CompanyAgentAssignments />
+                </div>
+
+                <div v-else-if="tab === 'customPlans'">
+                  <CustomPlansManager />
                 </div>
 
 
@@ -113,13 +118,14 @@ const tab = ref('payments')
 const selectedEmployee = ref(null)
 const selectedCompany = ref<any>(null)
 
-// Tabs & underline
+// Tabs & underline state
 const tabs = [
   
   //{ key: 'employees', label: 'Insurance Cards' },
   // { key: 'inactive', label: 'Former Employees' },
   { key: 'insuranceAgents', label: 'Manage Insurance Agents' },
    { key: 'CompanyAgentAssignments', label: 'Manage Clients' },
+  { key: 'customPlans', label: 'Custom Plans' },
   { key: 'adminOverview', label: 'Manage Admins' },
   { key: 'auditTrailList', label: 'Enrollment Requests' },
   { key: 'payments', label: 'Payments' },

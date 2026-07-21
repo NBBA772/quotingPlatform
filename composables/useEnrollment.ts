@@ -16,6 +16,7 @@ export async function fetchEnrollmentApplication(userId: number) {
   return {
     application: res?.application ?? null,
     businessCode: res?.bCode ?? null,
+    company: res?.company ?? null,
   }
 }
 

@@ -43,10 +43,27 @@
             </div>
           </div>
 
-          <!-- Center: Phone -->
-          <div class="flex items-center justify-center w-1/3">
-            <Icon name="mdi:phone-outline" size="18" class="text-gray-500 mr-1" />
-            <span class="text-sm">{{ agent.phone || "N/A" }}</span>
+          <!-- Center: Phone + enrollment permissions -->
+          <div class="flex flex-col items-center justify-center w-1/3">
+            <div class="flex items-center mb-2">
+              <Icon name="mdi:phone-outline" size="18" class="text-gray-500 mr-1" />
+              <span class="text-sm">{{ agent.phone || "N/A" }}</span>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+              <span class="text-gray-400">Can enroll:</span>
+              <label class="flex items-center gap-1 cursor-pointer">
+                <input type="checkbox" v-model="agent.canIndividual" @change="updatePermissions(agent)" />
+                Individual
+              </label>
+              <label class="flex items-center gap-1 cursor-pointer">
+                <input type="checkbox" v-model="agent.canGroup" @change="updatePermissions(agent)" />
+                Group
+              </label>
+              <label class="flex items-center gap-1 cursor-pointer">
+                <input type="checkbox" v-model="agent.canCustom" @change="updatePermissions(agent)" />
+                Custom
+              </label>
+            </div>
           </div>
 
           <!-- Right: Delete -->
@@ -139,6 +156,25 @@ const confirmRemove = async (agentId: number) => {
   }
 };
 
+
+// --- Update which enrollment modes an agent may work in ---
+const updatePermissions = async (agent: any) => {
+  if (!authToken) return;
+  try {
+    await $fetch(`/api/insurance-agent/${agent.id}/permissions`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: {
+        canIndividual: !!agent.canIndividual,
+        canGroup: !!agent.canGroup,
+        canCustom: !!agent.canCustom,
+      },
+    });
+  } catch (err) {
+    console.error("Error updating agent permissions:", err);
+    alert("Failed to update permissions");
+  }
+};
 
 // --- Reorder handler ---
 const onReorder = async () => {

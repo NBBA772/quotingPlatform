@@ -91,6 +91,13 @@ model InsuranceAgent {
   isActive  Boolean  @default(true)
   isAvailable Boolean @default(false)
   isOnCall    Boolean @default(false)
+
+  // Which enrollment modes this agent is allowed to work in.
+  // Set by an AppAdmin; defaults keep existing agents on the individual flow.
+  canIndividual Boolean @default(true)
+  canGroup      Boolean @default(false)
+  canCustom     Boolean @default(false)
+
   companies   Company[]
   companyAgreements CompanyAgreement[]
   lastAssignedAt DateTime @default(now())
@@ -149,6 +156,8 @@ model InsuranceApplication {
 
   healthPlan         String?
   healthPlanPrice    Float?
+  customPlan         CustomPlan? @relation(fields: [customPlanId], references: [id])
+  customPlanId       Int?
   visionAndDentalPlan Boolean?
   visionAndDentalPrice Float?
   lifeAncillaryPlan  String?
@@ -461,6 +470,10 @@ model Company {
   salesmanCode   String?               // optional
   industry       String                // industry *
 
+  // "individual" | "group" | "custom" — which enrollment mode this record belongs to.
+  // Individual/family enrollees are modeled as single-employee companies.
+  enrollmentType String                @default("individual")
+
   streetAddress  String
   city           String
   state          String
@@ -484,9 +497,46 @@ model Company {
 
   agreements     CompanyAgreement[]
 
+  customPlans    CustomPlan[]
+
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 
+}
+
+
+// Admin-authored plans for a specific "custom" company. The company's
+// employees log in and select one of these instead of the standard plans.
+model CustomPlan {
+  id          Int       @id @default(autoincrement())
+  company     Company   @relation(fields: [companyId], references: [id])
+  companyId   Int
+
+  name        String
+  description String?
+  planType    String?   // e.g., PPO, HMO, EPO
+  networkType String?   // e.g., In-Network, National
+  pdfUrl      String?   @db.Text
+
+  // Monthly price per coverage tier (all optional; leave blank to hide a tier)
+  priceSingle           Float?
+  priceIndividualSpouse Float?
+  priceIndividualChild  Float?
+  priceFamily           Float?
+
+  benefits    CustomPlanBenefit[]
+  applications InsuranceApplication[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CustomPlanBenefit {
+  id           Int        @id @default(autoincrement())
+  customPlan   CustomPlan @relation(fields: [customPlanId], references: [id], onDelete: Cascade)
+  customPlanId Int
+  text         String
 }
 
 

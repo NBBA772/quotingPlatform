@@ -31,26 +31,34 @@
               <!-- Metrics -->
               <AgentMetrics />
 
-              <!-- Quick actions -->
-              <div class="flex justify-end mb-4">
-                <NuxtLink
-                  to="/enrollee-intake"
-                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-[#046937] dark:hover:bg-[#058a45]"
-                >
-                  + New Enrollee
-                </NuxtLink>
+              <!-- Which enrollment type the agent wants to work with -->
+              <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">What are you working on?</h3>
+                <EnrollmentModeSelector
+                  v-model="selectedMode"
+                  :can-individual="permissions.canIndividual"
+                  :can-group="permissions.canGroup"
+                  :can-custom="permissions.canCustom"
+                />
               </div>
 
-              <!-- Tab Content   -->
+              <!-- Mode panel -->
               <Transition name="fade-slide" mode="out-in">
-                <div :key="tab">
-                  <!-- <InsuranceAgentLeadList v-if="tab==='Leads'"/> -->
-                  <InsuranceAgentLeads v-if="tab==='Companies'"/>
-                  <!-- <InsuranceCardDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='insuranceCard'" />
-                  <PlanBenefitDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='planBenefits'" />
-                  <ProviderNetworkDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='providerNetwork'" />
-                  <ClaimsSupportDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='claimsSupport'" />
-                  <PlanDetailsDisplay :userId="selectedEmployee || loggedInUser?.id" v-if="tab==='planDetails'" /> -->
+                <div :key="selectedMode || 'none'">
+                  <template v-if="selectedMode === 'individual'">
+                    <div class="flex justify-end mb-4">
+                      <NuxtLink
+                        to="/enrollee-intake"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-[#046937] dark:hover:bg-[#058a45]"
+                      >
+                        + New Enrollee
+                      </NuxtLink>
+                    </div>
+                    <InsuranceAgentLeads />
+                  </template>
+
+                  <CompanyEnrolleeList v-else-if="selectedMode === 'group'" mode="group" />
+                  <CompanyEnrolleeList v-else-if="selectedMode === 'custom'" mode="custom" />
                 </div>
               </Transition>
             </section>
@@ -83,6 +91,27 @@ const tab = ref('Companies')
 const tabRefs = ref<HTMLLIElement[]>([])
 const underlineX = ref(0)
 const underlineWidth = ref(0)
+
+// Enrollment mode the agent is currently working in, gated by their permissions.
+const selectedMode = ref<string | null>(null)
+const permissions = ref({ canIndividual: false, canGroup: false, canCustom: false })
+
+async function fetchAgentPermissions() {
+  try {
+    const res: any = await $fetch('/api/insurance-agent/me', {
+      headers: { Authorization: `Bearer ${authCookie.value}` },
+    })
+    if (res?.agent) {
+      permissions.value = {
+        canIndividual: !!res.agent.canIndividual,
+        canGroup: !!res.agent.canGroup,
+        canCustom: !!res.agent.canCustom,
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load agent permissions:', err)
+  }
+}
 
 const photos = ref([])
 const loadingPhotos = ref(false)
@@ -253,6 +282,8 @@ onMounted(async () => {
   }
 
   loggedInUser.value = await getLoggedInUser()
+
+  await fetchAgentPermissions()
 
   if (loggedInUser.value?.companyId) {
     await fetchCompanyInfo(loggedInUser.value.companyId)

@@ -39,11 +39,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRoute } from '#imports'
+
+const route = useRoute()
 
 const form = ref({
   firstName: '',
   lastName: '',
-  email: '',
+  // Prefilled from the invite link (?email=…) so invited admins can't mistype it
+  email: typeof route.query.email === 'string' ? route.query.email : '',
   username: '',
   password: ''
 })

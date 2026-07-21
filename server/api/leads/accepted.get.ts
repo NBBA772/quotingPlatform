@@ -1,5 +1,6 @@
 // /server/api/companies/assigned.ts
 import prisma from '~/server/database/client'
+import { getQuery } from 'h3'
 import { getUserByAuthToken } from '~/server/database/repositories/sessionRepository'
 
 export default defineEventHandler(async (event) => {
@@ -15,8 +16,15 @@ export default defineEventHandler(async (event) => {
     })
     if (!agent) throw createError({ statusCode: 400, statusMessage: 'User is not an agent' })
 
+    // Optional mode filter so the dashboard can request individual / group /
+    // custom companies separately. Omitted → all of the agent's companies.
+    const enrollmentType = getQuery(event).enrollmentType as string | undefined
+    const validType = ['individual', 'group', 'custom'].includes(enrollmentType ?? '')
+      ? enrollmentType
+      : undefined
+
     const assignedRaw = await prisma.company.findMany({
-      where: { agentId: agent.id },
+      where: { agentId: agent.id, ...(validType ? { enrollmentType: validType } : {}) },
       include: {
         agent: { 
           select: { 
