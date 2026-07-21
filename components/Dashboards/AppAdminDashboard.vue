@@ -100,6 +100,8 @@
                 </div> -->
               </div>
             </Transition>
+
+            <ChangePassword />
           </section>
         </div>
       </div>

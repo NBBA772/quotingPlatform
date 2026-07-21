@@ -61,6 +61,8 @@
                   <CompanyEnrolleeList v-else-if="selectedMode === 'custom'" mode="custom" />
                 </div>
               </Transition>
+
+              <ChangePassword />
             </section>
           </Transition>
 

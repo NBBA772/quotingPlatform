@@ -45,6 +45,8 @@
                   />
                 </div>
               </Transition>
+
+              <ChangePassword />
             </section>
           </Transition>
 
