@@ -2,12 +2,14 @@
   <PatternSection>
     <div>
       <CompanyProfileHeaderSkeletonLoader v-if="loading" />
-      <CompanyProfileHeader 
+      <CompanyProfileHeader
         v-else
         :user="loggedInUser"
         role="App Admin"
         @file-change="handleFileChange"
       />
+
+      <ChangePassword v-if="!loading && loggedInUser" />
 
     </div>
   </PatternSection>

@@ -107,7 +107,7 @@ async function submit() {
 
   saving.value = true
   try {
-    await $fetch('/api/register-admin', {
+    const res: any = await $fetch('/api/register-admin', {
       method: 'POST',
       headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {},
       body: {
@@ -118,7 +118,11 @@ async function submit() {
         password: form.password,
       },
     })
-    message.value = `Admin login created for ${form.firstName} ${form.lastName} (${form.email}).`
+    const name = `${form.firstName} ${form.lastName}`
+    const to = form.email
+    message.value = res?.emailSent
+      ? `Admin login created for ${name} (${to}). A welcome email with their login details was sent.`
+      : `Admin login created for ${name} (${to}). (Welcome email could not be sent — share their login details manually.)`
     Object.assign(form, blank())
     passwordConfirm.value = ''
     usernameEdited = false
