@@ -52,13 +52,7 @@
                 </template>
                 <template v-else>
                   <button
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                    @click="openApplication(emp)"
-                  >
-                    Application
-                  </button>
-                  <button
-                    class="ml-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
                     @click="startEnrollment(emp)"
                   >
                     Enroll

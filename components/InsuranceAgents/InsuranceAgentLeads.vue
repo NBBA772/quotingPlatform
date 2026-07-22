@@ -57,15 +57,8 @@
                 <div v-else>
                     <button
                       v-if="!employee.hasSignedApplication"
-                      @click="employeeOpenModal(employee)"
-                      class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                    >
-                      Application
-                    </button>
-                    <button
-                      v-if="!employee.hasSignedApplication"
                       @click="startEnrollment(employee)"
-                      class="ml-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                      class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
                     >
                       Enroll
                     </button>
