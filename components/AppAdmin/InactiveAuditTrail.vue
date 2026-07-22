@@ -31,9 +31,20 @@
           <td class="p-2 dark:text-white">{{ new Date(trail.timestamp).toLocaleString() }}</td>
           <td class="p-2 dark:text-white">{{ trail.user ? `${trail.user.firstName} ${trail.user.lastName}` : "N/A" }}</td>
           <td class="p-2 dark:text-white">
-            <a v-if="trail.insuranceApplication?.pdfUrl" :href="trail.insuranceApplication.pdfUrl" target="_blank" class="text-blue-500 hover:underline">
-              View PDF
-            </a>
+            <div v-if="trail.insuranceApplication?.pdfs?.length" class="flex flex-col gap-1">
+              <a
+                v-for="(pdf, i) in trail.insuranceApplication.pdfs"
+                :key="pdf.id"
+                :href="pdf.url"
+                target="_blank"
+                class="text-blue-500 hover:underline inline-flex items-center gap-1 whitespace-nowrap"
+              >
+                {{ pdf.signed ? 'Signed' : 'Draft' }} PDF
+                <span class="text-gray-400 text-xs">{{ new Date(pdf.createdAt).toLocaleDateString() }}</span>
+                <span v-if="i === 0" class="text-[10px] uppercase px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">Latest</span>
+              </a>
+            </div>
+            <a v-else-if="trail.insuranceApplication?.pdfUrl" :href="trail.insuranceApplication.pdfUrl" target="_blank" class="text-blue-500 hover:underline">View PDF</a>
             <span v-else>N/A</span>
           </td>
           <td class="p-2">
@@ -65,7 +76,7 @@ interface AuditTrail {
   action: string;
   timestamp: string;
   user?: { firstName: string; lastName: string };
-  insuranceApplication?: { pdfUrl?: string };
+  insuranceApplication?: { pdfUrl?: string; pdfs?: { id: number; url: string; signed: boolean; createdAt: string }[] };
 }
 
 const auditTrails = ref<AuditTrail[]>([]);

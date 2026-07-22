@@ -151,6 +151,10 @@ export default defineEventHandler(async (event) => {
       },
     })
 
+    await prisma.applicationPdf.create({
+      data: { applicationId: app.id, url: pdfUrl, kind: 'signed', signed: true },
+    }).catch((e) => console.error('Failed to record signed PDF version:', e))
+
     await prisma.auditTrail.create({
       data: {
         userId: user.id,

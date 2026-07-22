@@ -183,15 +183,30 @@ model InsuranceApplication {
   payments           Payment[]
 
   pdfUrl             String?   @db.Text
+  pdfs               ApplicationPdf[]
 
   auditTrails        AuditTrail[]
 
-  dependents         Dependent[] 
+  dependents         Dependent[]
 
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
 
+
+// A generated/signed PDF version of an application. Each PDF generation or
+// signing appends a row, so the full history is kept (the newest is "latest").
+model ApplicationPdf {
+  id                   Int                  @id @default(autoincrement())
+  insuranceApplication InsuranceApplication @relation(fields: [applicationId], references: [id])
+  applicationId        Int
+
+  url    String  @db.Text
+  kind   String  @default("unsigned") // "unsigned" | "signed"
+  signed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
 
 model AncillaryPlan {
   id                     Int                   @id @default(autoincrement())

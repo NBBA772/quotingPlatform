@@ -65,6 +65,13 @@
                   </button>
                 </template>
                 <button
+                  class="ml-2 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded"
+                  title="Load the application to fix mistakes and regenerate the PDF"
+                  @click="startEnrollment(emp)"
+                >
+                  Edit
+                </button>
+                <button
                   class="text-red-600 hover:text-red-800 ml-auto"
                   title="Delete enrollee permanently"
                   @click="permanentDeleteEnrollee(company, emp)"

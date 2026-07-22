@@ -240,6 +240,11 @@ export default defineEventHandler(async (event) => {
       data: { pdfUrl, status: 'pdf_generated' },
     })
 
+    // Keep a version history so edits/regenerations don't lose the prior PDF.
+    await prisma.applicationPdf.create({
+      data: { applicationId: app.id, url: pdfUrl, kind: 'unsigned', signed: false },
+    }).catch((e) => console.error('Failed to record PDF version:', e))
+
     const previewUrl = await getSignedUrl(
       s3,
       new GetObjectCommand({ Bucket: BUCKET, Key: fileKey }),

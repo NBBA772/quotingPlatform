@@ -7,7 +7,9 @@ export default defineEventHandler(async () => {
       where: { deletedAt: null }, // only active
       include: {
         user: true,
-        insuranceApplication: true,
+        insuranceApplication: {
+          include: { pdfs: { orderBy: { createdAt: 'desc' } } },
+        },
       },
       orderBy: { timestamp: 'desc' },
     })

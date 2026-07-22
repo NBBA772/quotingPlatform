@@ -8,6 +8,16 @@
           <!-- Main Section -->
           <Transition name="slide-aside">
             <section class="md:col-span-2 transition-all duration-500 ease-in-out">
+              <!-- Edit / redo the application (loads existing data, regenerates the PDF) -->
+              <div v-if="loggedInUser?.id" class="flex justify-end mb-4">
+                <NuxtLink
+                  :to="`/enroll/${loggedInUser.id}/applicant`"
+                  class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+                >
+                  Edit / Redo Application
+                </NuxtLink>
+              </div>
+
               <!-- Tabs -->
               <div class="relative border-b border-gray-300 dark:border-gray-600 mb-4">
                 <ul class="flex space-x-4 bg-white dark:bg-[#3a4934] p-4 shadow-md relative">
