@@ -28,6 +28,11 @@
           <p class="text-xs text-gray-500 dark:text-gray-400">/mo across signed</p>
         </div>
         <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
+          <p class="text-xs text-gray-500 dark:text-gray-400">Commissionable</p>
+          <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">${{ (m.commissionable ?? 0).toFixed(0) }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">/mo (each product − ${{ COMMISSIONABLE_FEE }})</p>
+        </div>
+        <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
           <p class="text-xs text-gray-500 dark:text-gray-400">Collected This Month</p>
           <p class="text-2xl font-bold text-gray-800 dark:text-white">${{ m.paidThisMonth.total.toFixed(0) }}</p>
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ m.paidThisMonth.count }} payment{{ m.paidThisMonth.count === 1 ? '' : 's' }}</p>
@@ -87,6 +92,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useCookie } from '#imports'
+import { COMMISSIONABLE_FEE } from '~/utils/enrollmentFee'
 
 const m = ref<any>(null)
 const loading = ref(true)

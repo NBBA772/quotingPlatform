@@ -60,6 +60,7 @@
                 <div v-else-if="tab === 'insuranceAgents'">
                   <AddInsuranceAgent />
                   <AddAgentAdmin />
+                  <AgentAdminList />
                   <InsuranceAgentDetails />
                 </div>
 

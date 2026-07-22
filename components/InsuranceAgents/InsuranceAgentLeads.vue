@@ -50,27 +50,36 @@
             <td class="p-2 dark:text-white">{{ employee.phone || "—" }}</td>
             <td class="p-2 dark:text-white">—</td>
             <td class="p-2 dark:text-white">
-              <span v-if="employee.hasSigned" class="text-green-600 dark:text-green-400 font-semibold">
-                Signed
-              </span>
-              <div v-else>
-                  <button
-                    v-if="!employee.hasSignedApplication"
-                    @click="employeeOpenModal(employee)"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                  >
-                    Application
-                  </button>
-                  <button
-                    v-if="!employee.hasSignedApplication"
-                    @click="startEnrollment(employee)"
-                    class="ml-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-                  >
-                    Enroll
-                  </button>
-                  <div v-else class="text-green-600 dark:text-red-400 font-semibold">
-                    Application Signed
-                  </div>
+              <div class="flex items-center gap-2">
+                <span v-if="employee.hasSigned" class="text-green-600 dark:text-green-400 font-semibold">
+                  Signed
+                </span>
+                <div v-else>
+                    <button
+                      v-if="!employee.hasSignedApplication"
+                      @click="employeeOpenModal(employee)"
+                      class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                    >
+                      Application
+                    </button>
+                    <button
+                      v-if="!employee.hasSignedApplication"
+                      @click="startEnrollment(employee)"
+                      class="ml-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                    >
+                      Enroll
+                    </button>
+                    <div v-else class="text-green-600 dark:text-red-400 font-semibold">
+                      Application Signed
+                    </div>
+                </div>
+                <button
+                  class="text-red-600 hover:text-red-800 ml-auto"
+                  title="Delete enrollee permanently"
+                  @click="permanentDeleteEnrollee(lead, employee)"
+                >
+                  <Icon name="mdi:delete-forever" size="20" />
+                </button>
               </div>
             </td>
           </tr>
@@ -180,6 +189,17 @@ const closeModal = () => {
   selectedLead.value = null;
   userId.value = null;
   showModal.value = false;
+};
+
+const permanentDeleteEnrollee = async (lead: any, employee: any) => {
+  if (!confirm(`PERMANENTLY delete ${employee.firstName} ${employee.lastName}? This removes their account and all their data and cannot be undone.`)) return;
+  try {
+    await $fetch(`/api/employee/${employee.id}/permanent`, { method: "DELETE" });
+    lead.employees = (lead.employees || []).filter((e: any) => e.id !== employee.id);
+  } catch (err: any) {
+    console.error("Error deleting enrollee:", err);
+    alert(err?.data?.statusMessage || "Failed to delete enrollee");
+  }
 };
 
 onMounted(fetchLeads);

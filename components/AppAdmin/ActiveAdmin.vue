@@ -50,13 +50,20 @@
           </div>
 
           <!-- Right: Delete -->
-          <div class="flex justify-end w-1/3 min-w-[60px]">
+          <div class="flex justify-end items-center gap-2 w-1/3 min-w-[60px]">
             <button
-              class="text-red-500 hover:text-red-700"
+              class="text-gray-500 hover:text-red-600"
               @click="confirmRemove(agent.id)"
-              title="Remove Agent"
+              title="Move to trash (soft delete)"
             >
               <Icon name="mdi:trash-can-outline" size="20" />
+            </button>
+            <button
+              class="text-red-600 hover:text-red-800"
+              @click="permanentDelete(agent)"
+              title="Delete permanently"
+            >
+              <Icon name="mdi:delete-forever" size="22" />
             </button>
           </div>
         </li>
@@ -135,6 +142,22 @@ const confirmRemove = async (agentId: number) => {
     console.error("Error removing agent:", err);
     removingIds.value.delete(agentId);
     alert("Failed to remove agent");
+  }
+};
+
+// --- Permanent delete (hard delete, irreversible) ---
+const permanentDelete = async (admin: any) => {
+  if (!authToken) return;
+  if (!confirm(`PERMANENTLY delete admin ${admin.firstName} ${admin.lastName}? This removes their account and cannot be undone.`)) return;
+  try {
+    await $fetch(`/api/admin/${admin.id}/permanent`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    agents.value = agents.value.filter((a) => a.id !== admin.id);
+  } catch (err: any) {
+    console.error("Error permanently deleting admin:", err);
+    alert(err?.data?.statusMessage || "Failed to permanently delete admin");
   }
 };
 

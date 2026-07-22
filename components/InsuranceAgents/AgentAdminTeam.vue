@@ -25,6 +25,11 @@
         <p class="text-xs text-gray-500 dark:text-gray-400">/mo across signed</p>
       </div>
       <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
+        <p class="text-xs text-gray-500 dark:text-gray-400">Commissionable</p>
+        <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">${{ (metrics.commissionable ?? 0).toFixed(0) }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">/mo (each product − ${{ COMMISSIONABLE_FEE }})</p>
+      </div>
+      <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
         <p class="text-xs text-gray-500 dark:text-gray-400">Collected This Month</p>
         <p class="text-2xl font-bold text-gray-800 dark:text-white">${{ metrics.paidThisMonth.total.toFixed(0) }}</p>
         <p class="text-xs text-gray-500 dark:text-gray-400">{{ metrics.paidThisMonth.count }} payment{{ metrics.paidThisMonth.count === 1 ? '' : 's' }}</p>
@@ -98,6 +103,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthCookie } from '~/composables/useAuth'
+import { COMMISSIONABLE_FEE } from '~/utils/enrollmentFee'
 
 const authCookie = useAuthCookie()
 const authHeaders = () => (authCookie.value ? { Authorization: `Bearer ${authCookie.value}` } : {})

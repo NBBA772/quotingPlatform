@@ -1,6 +1,7 @@
 import { createError } from 'h3'
 import prisma from '~/server/database/client'
 import { requireAuthUser } from '~/server/utils/enrollmentAuth'
+import { commissionableForApplication } from '~/utils/enrollmentFee'
 
 function monthlyTotal(app: any): number {
   let total = 0
@@ -95,8 +96,10 @@ export default defineEventHandler(async (event) => {
     (a) => !a.signedAt && ['draft', 'underwriting_complete', 'pdf_generated'].includes(a.status || 'draft'),
   )
 
-  const monthlyBook = Number(paid.concat(signed.filter((a) => a.status !== 'paid'))
-    .reduce((sum, a) => sum + monthlyTotal(a), 0).toFixed(2))
+  const book = paid.concat(signed.filter((a) => a.status !== 'paid'))
+  const monthlyBook = Number(book.reduce((sum, a) => sum + monthlyTotal(a), 0).toFixed(2))
+  // Commissionable = per product (each plan price minus the fee), summed.
+  const commissionable = Number(book.reduce((sum, a) => sum + commissionableForApplication(a), 0).toFixed(2))
 
   // Clients with no application started yet
   const notStarted = companies.flatMap((c) =>
@@ -130,6 +133,7 @@ export default defineEventHandler(async (event) => {
       notStarted: notStarted.length,
     },
     monthlyBook,
+    commissionable,
     paidThisMonth: {
       count: paidMonthAgg._count,
       total: Number((paidMonthAgg._sum.amount || 0).toFixed(2)),

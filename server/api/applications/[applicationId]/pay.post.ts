@@ -5,6 +5,7 @@ import prisma from '~/server/database/client'
 import { requireAuthUser, assertCanManageApplication, getApplicationOrThrow } from '~/server/utils/enrollmentAuth'
 import { epayConfigured, epayFetch } from '~/server/utils/epaypolicy'
 import { buildPaymentAuthPdf } from '~/server/utils/paymentAuthPdf'
+import { logPaymentToSheet } from '~/server/utils/googleSheets'
 import { ONE_TIME_ENROLLMENT_FEE } from '~/utils/enrollmentFee'
 
 const s3 = new S3Client({
@@ -199,6 +200,9 @@ export default defineEventHandler(async (event) => {
         },
       })
 
+      // Record the payment in Google Sheets (best-effort).
+      await logPaymentToSheet(app, { amount, method, status: 'authorized', invoice })
+
       return { success: true, manual: true, paymentId: payment.id, amount }
     }
 
@@ -272,6 +276,15 @@ export default defineEventHandler(async (event) => {
         action: method === 'ach' ? 'Payment (ePayPolicy ACH)' : 'Payment (ePayPolicy credit card)',
         metadata: { transactionId, amount, invoice, method },
       },
+    })
+
+    // Record the payment in Google Sheets (best-effort).
+    await logPaymentToSheet(app, {
+      amount,
+      method,
+      status: 'succeeded',
+      transactionId: transactionId != null ? String(transactionId) : null,
+      invoice,
     })
 
     return { success: true, transactionId, amount }

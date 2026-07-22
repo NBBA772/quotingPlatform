@@ -46,23 +46,32 @@
             <td class="p-2 dark:text-white">{{ emp.email }}</td>
             <td class="p-2 dark:text-white">{{ emp.phone || '—' }}</td>
             <td class="p-2 dark:text-white">
-              <template v-if="emp.hasSignedApplication">
-                <span class="text-green-600 dark:text-green-400 font-semibold">Application Signed</span>
-              </template>
-              <template v-else>
+              <div class="flex items-center gap-2">
+                <template v-if="emp.hasSignedApplication">
+                  <span class="text-green-600 dark:text-green-400 font-semibold">Application Signed</span>
+                </template>
+                <template v-else>
+                  <button
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                    @click="openApplication(emp)"
+                  >
+                    Application
+                  </button>
+                  <button
+                    class="ml-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                    @click="startEnrollment(emp)"
+                  >
+                    Enroll
+                  </button>
+                </template>
                 <button
-                  class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                  @click="openApplication(emp)"
+                  class="text-red-600 hover:text-red-800 ml-auto"
+                  title="Delete enrollee permanently"
+                  @click="permanentDeleteEnrollee(company, emp)"
                 >
-                  Application
+                  <Icon name="mdi:delete-forever" size="20" />
                 </button>
-                <button
-                  class="ml-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-                  @click="startEnrollment(emp)"
-                >
-                  Enroll
-                </button>
-              </template>
+              </div>
             </td>
           </tr>
           <tr v-if="(company.employees || []).length === 0">
@@ -196,6 +205,20 @@ const closeApplication = () => {
   showAppModal.value = false
   appUserId.value = null
   appModel.value = { application: undefined }
+}
+
+const permanentDeleteEnrollee = async (company: any, emp: any) => {
+  if (!confirm(`PERMANENTLY delete ${emp.firstName} ${emp.lastName}? This removes their account and all their data and cannot be undone.`)) return
+  try {
+    await $fetch(`/api/employee/${emp.id}/permanent`, {
+      method: 'DELETE',
+      headers: authHeaders,
+    })
+    company.employees = (company.employees || []).filter((e: any) => e.id !== emp.id)
+  } catch (err: any) {
+    console.error('Error deleting enrollee:', err)
+    alert(err?.data?.statusMessage || 'Failed to delete enrollee')
+  }
 }
 
 const startEnrollment = async (emp: any) => {

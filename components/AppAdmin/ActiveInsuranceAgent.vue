@@ -92,13 +92,20 @@
           </div>
 
           <!-- Right: Delete -->
-          <div class="flex justify-end w-1/3 min-w-[60px]">
+          <div class="flex justify-end items-center gap-2 w-1/3 min-w-[60px]">
             <button
-              class="text-red-500 hover:text-red-700"
+              class="text-gray-500 hover:text-red-600"
               @click="confirmRemove(agent.id)"
-              title="Remove Agent"
+              title="Move to trash (soft delete)"
             >
               <Icon name="mdi:trash-can-outline" size="20" />
+            </button>
+            <button
+              class="text-red-600 hover:text-red-800"
+              @click="permanentDelete(agent)"
+              title="Delete permanently"
+            >
+              <Icon name="mdi:delete-forever" size="22" />
             </button>
           </div>
         </li>
@@ -244,6 +251,22 @@ const updatePermissions = async (agent: any) => {
   } catch (err) {
     console.error("Error updating agent permissions:", err);
     alert("Failed to update permissions");
+  }
+};
+
+// --- Permanent delete (hard delete, irreversible) ---
+const permanentDelete = async (agent: any) => {
+  if (!authToken) return;
+  if (!confirm(`PERMANENTLY delete ${agent.firstName} ${agent.lastName}? This removes their login and all their data and cannot be undone.`)) return;
+  try {
+    await $fetch(`/api/insurance-agent/${agent.id}/permanent`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    agents.value = agents.value.filter((a) => a.id !== agent.id);
+  } catch (err: any) {
+    console.error("Error permanently deleting agent:", err);
+    alert(err?.data?.statusMessage || "Failed to permanently delete agent");
   }
 };
 

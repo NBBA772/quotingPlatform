@@ -68,7 +68,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in data.pendingManual" :key="row.id" class="border-t dark:border-gray-600">
+            <tr v-for="row in pagedManual" :key="row.id" class="border-t dark:border-gray-600">
               <td class="p-2 dark:text-white">{{ formatDate(row.createdAt) }}</td>
               <td class="p-2 dark:text-white">{{ row.applicant }}</td>
               <td class="p-2 dark:text-white">{{ row.group }}</td>
@@ -92,10 +92,19 @@
                 >
                   {{ markingPaid === row.id ? 'Saving…' : 'Mark Paid' }}
                 </button>
+                <button
+                  type="button"
+                  class="text-red-600 hover:text-red-800 ml-3 align-middle"
+                  title="Delete payment permanently"
+                  @click="permanentDeletePayment(row.id)"
+                >
+                  <Icon name="mdi:delete-forever" size="20" />
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
+        <PaginationBar :total="data.pendingManual.length" :page="pageManual" :page-size="pageSize" @update:page="pageManual = $event" />
       </div>
 
       <!-- Upcoming payments -->
@@ -114,7 +123,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in data.upcoming" :key="row.applicationId" class="border-t dark:border-gray-600">
+            <tr v-for="row in pagedUpcoming" :key="row.applicationId" class="border-t dark:border-gray-600">
               <td class="p-2 dark:text-white">{{ row.applicant }}</td>
               <td class="p-2 dark:text-white">{{ row.group }}</td>
               <td class="p-2 dark:text-white">${{ row.amount.toFixed(2) }}</td>
@@ -130,6 +139,7 @@
             </tr>
           </tbody>
         </table>
+        <PaginationBar :total="data.upcoming.length" :page="pageUpcoming" :page-size="pageSize" @update:page="pageUpcoming = $event" />
       </div>
 
       <!-- Declined -->
@@ -148,7 +158,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in data.declined" :key="row.id" class="border-t dark:border-gray-600">
+            <tr v-for="row in pagedDeclined" :key="row.id" class="border-t dark:border-gray-600">
               <td class="p-2 dark:text-white">{{ formatDate(row.createdAt) }}</td>
               <td class="p-2 dark:text-white">{{ row.applicant }}</td>
               <td class="p-2 dark:text-white">${{ row.amount.toFixed(2) }}</td>
@@ -163,10 +173,19 @@
                   Retry
                 </NuxtLink>
                 <span v-else class="text-green-600 dark:text-green-400 text-xs">Paid since</span>
+                <button
+                  type="button"
+                  class="text-red-600 hover:text-red-800 ml-3 align-middle"
+                  title="Delete payment permanently"
+                  @click="permanentDeletePayment(row.id)"
+                >
+                  <Icon name="mdi:delete-forever" size="20" />
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
+        <PaginationBar :total="data.declined.length" :page="pageDeclined" :page-size="pageSize" @update:page="pageDeclined = $event" />
       </div>
 
       <!-- Recent applications -->
@@ -183,7 +202,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in data.recentApplications" :key="row.applicationId" class="border-t dark:border-gray-600">
+            <tr v-for="row in pagedRecent" :key="row.applicationId" class="border-t dark:border-gray-600">
               <td class="p-2 dark:text-white">{{ formatDate(row.createdAt) }}</td>
               <td class="p-2 dark:text-white">{{ row.applicant }}</td>
               <td class="p-2 dark:text-white">{{ row.group }}</td>
@@ -196,18 +215,39 @@
             </tr>
           </tbody>
         </table>
+        <PaginationBar :total="data.recentApplications.length" :page="pageRecent" :page-size="pageSize" @update:page="pageRecent = $event" />
       </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useCookie } from '#imports'
 
 const data = ref<any>(null)
 const loading = ref(false)
 const error = ref('')
+
+// Client-side pagination for each payments table
+const pageSize = 10
+const pageManual = ref(1)
+const pageUpcoming = ref(1)
+const pageDeclined = ref(1)
+const pageRecent = ref(1)
+const pageSlice = (arr: any[] | undefined, page: number) =>
+  (arr || []).slice((page - 1) * pageSize, page * pageSize)
+const pagedManual = computed(() => pageSlice(data.value?.pendingManual, pageManual.value))
+const pagedUpcoming = computed(() => pageSlice(data.value?.upcoming, pageUpcoming.value))
+const pagedDeclined = computed(() => pageSlice(data.value?.declined, pageDeclined.value))
+const pagedRecent = computed(() => pageSlice(data.value?.recentApplications, pageRecent.value))
+// Reset to page 1 whenever the data reloads.
+watch(data, () => {
+  pageManual.value = 1
+  pageUpcoming.value = 1
+  pageDeclined.value = 1
+  pageRecent.value = 1
+})
 
 const statusLabels: Record<string, string> = {
   draft: 'Draft',
@@ -264,6 +304,19 @@ async function markPaid(paymentId: number) {
     error.value = err?.data?.statusMessage || 'Failed to mark paid'
   } finally {
     markingPaid.value = null
+  }
+}
+
+async function permanentDeletePayment(paymentId: number) {
+  if (!confirm('PERMANENTLY delete this payment record? This cannot be undone.')) return
+  try {
+    await $fetch(`/api/admin/payments/${paymentId}/permanent`, {
+      method: 'DELETE',
+      headers: adminHeaders(),
+    })
+    await load()
+  } catch (err: any) {
+    error.value = err?.data?.statusMessage || 'Failed to delete payment'
   }
 }
 

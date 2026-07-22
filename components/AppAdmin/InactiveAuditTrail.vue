@@ -8,7 +8,8 @@
       No processed applications yet.
     </div>
 
-    <table v-else class="w-full text-left border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div v-else>
+    <table class="w-full text-left border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <thead class="bg-gray-100 dark:bg-[#142610]">
         <tr>
           <th class="p-3 border-b dark:border-gray-700">Signer</th>
@@ -22,7 +23,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="trail in auditTrails" :key="trail.id" class="hover:bg-gray-50 dark:hover:bg-[#2d3a2a]">
+        <tr v-for="trail in pagedTrails" :key="trail.id" class="hover:bg-gray-50 dark:hover:bg-[#2d3a2a]">
           <td class="p-2 dark:text-white">{{ trail.signer }}</td>
           <td class="p-2 dark:text-white">{{ trail.email }}</td>
           <td class="p-2 dark:text-white">{{ trail.action }}</td>
@@ -36,18 +37,25 @@
             <span v-else>N/A</span>
           </td>
           <td class="p-2">
-            <button class="text-green-600 hover:text-green-800" @click="confirmRestore(trail.id)" title="Restore Application">
-              <Icon name="mdi:restore" size="20" />
-            </button>
+            <div class="flex items-center gap-2">
+              <button class="text-green-600 hover:text-green-800" @click="confirmRestore(trail.id)" title="Restore Application">
+                <Icon name="mdi:restore" size="20" />
+              </button>
+              <button class="text-red-600 hover:text-red-800" @click="permanentDelete(trail.id)" title="Delete permanently">
+                <Icon name="mdi:delete-forever" size="22" />
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
     </table>
+    <PaginationBar :total="auditTrails.length" :page="page" :page-size="pageSize" @update:page="page = $event" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 
 interface AuditTrail {
   id: number;
@@ -63,6 +71,16 @@ interface AuditTrail {
 const auditTrails = ref<AuditTrail[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+
+const page = ref(1);
+const pageSize = 10;
+const pagedTrails = computed(() =>
+  auditTrails.value.slice((page.value - 1) * pageSize, page.value * pageSize),
+);
+watch(() => auditTrails.value.length, (len) => {
+  const maxPage = Math.max(1, Math.ceil(len / pageSize));
+  if (page.value > maxPage) page.value = maxPage;
+});
 
 onMounted(async () => {
   try {
@@ -84,6 +102,17 @@ const confirmRestore = async (id: number) => {
   } catch (err) {
     console.error("Error restoring:", err);
     alert("Failed to restore record");
+  }
+};
+
+const permanentDelete = async (id: number) => {
+  if (!confirm("PERMANENTLY delete this enrollment request? This cannot be undone.")) return;
+  try {
+    await $fetch(`/api/admin/audit-trails/${id}/permanent`, { method: "DELETE" });
+    auditTrails.value = auditTrails.value.filter(a => a.id !== id);
+  } catch (err: any) {
+    console.error("Error permanently deleting:", err);
+    alert(err?.data?.statusMessage || "Failed to permanently delete record");
   }
 };
 </script>
