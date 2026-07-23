@@ -105,6 +105,7 @@ export default defineEventHandler(async (event) => {
     line('Phone', app.phoneNumber)
     line('Address', [app.streetAddress, app.city, app.state, app.zipCode].filter(Boolean).join(', '))
     line('Date of Birth', app.dateOfBirth ? new Date(app.dateOfBirth).toLocaleDateString('en-US') : null)
+    line('SSN', app.socialSecurityNumber)
     line('Gender', app.gender)
     line('Height / Weight', [app.height, app.weight].filter(Boolean).join(' / ') || null)
 
@@ -112,6 +113,7 @@ export default defineEventHandler(async (event) => {
       heading('Spouse')
       line('Name', [app.spouseFirstName, app.spouseMiddleName, app.spouseLastName].filter(Boolean).join(' '))
       line('Date of Birth', app.spouseDateOfBirth ? new Date(app.spouseDateOfBirth).toLocaleDateString('en-US') : null)
+      line('SSN', app.spouseSocialSecurityNumber)
       line('Gender', app.spouseGender)
     }
 
@@ -120,7 +122,7 @@ export default defineEventHandler(async (event) => {
       for (const dep of app.dependents) {
         line(
           dep.relationship || 'Dependent',
-          `${[dep.firstName, dep.lastName].filter(Boolean).join(' ')} — DOB ${dep.dateOfBirth ? new Date(dep.dateOfBirth).toLocaleDateString('en-US') : '—'}, ${dep.gender || '—'}`,
+          `${[dep.firstName, dep.lastName].filter(Boolean).join(' ')} — DOB ${dep.dateOfBirth ? new Date(dep.dateOfBirth).toLocaleDateString('en-US') : '—'}, ${dep.gender || '—'}, SSN ${dep.socialSecurityNumber || '—'}`,
         )
       }
     }

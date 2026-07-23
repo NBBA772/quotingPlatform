@@ -24,11 +24,13 @@
         <p class="text-2xl font-bold text-gray-800 dark:text-white">${{ metrics.monthlyBook.toFixed(0) }}</p>
         <p class="text-xs text-gray-500 dark:text-gray-400">/mo across signed</p>
       </div>
+      <!-- Commissionable box hidden from the dashboard (value still computed server-side + logged to Google Sheets). Uncomment to show again.
       <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
         <p class="text-xs text-gray-500 dark:text-gray-400">Commissionable</p>
         <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">${{ (metrics.commissionable ?? 0).toFixed(0) }}</p>
         <p class="text-xs text-gray-500 dark:text-gray-400">/mo (each product − ${{ COMMISSIONABLE_FEE }})</p>
       </div>
+      -->
       <div class="bg-white dark:bg-[#3a4934] rounded-xl shadow-md p-4">
         <p class="text-xs text-gray-500 dark:text-gray-400">Collected This Month</p>
         <p class="text-2xl font-bold text-gray-800 dark:text-white">${{ metrics.paidThisMonth.total.toFixed(0) }}</p>

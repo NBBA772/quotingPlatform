@@ -1,7 +1,10 @@
 <template>
   <div class="mx-auto p-6 bg-white dark:bg-[#3a4934] rounded-xl shadow-md space-y-6">
-    <div class="flex items-center">
-      <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex-1">Enrollment Request</h2>
+    <div class="flex flex-wrap items-center gap-3">
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Enrollment Request</h2>
+
+      <!-- Data export (admin): includes SSNs not printed on the PDF -->
+      <DataExport />
 
       <!-- Toggle Open / Processed on the right -->
       <div class="flex space-x-2 ml-auto">
